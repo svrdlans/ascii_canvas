@@ -5,19 +5,27 @@ defmodule AC.WebApi.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      AC.WebApi.Telemetry,
-      {Phoenix.PubSub, name: AC.WebApi.PubSub},
-      AC.WebApi.Endpoint
-    ]
-
+    children = _get_children()
     opts = [strategy: :one_for_one, name: AC.WebApi.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  @impl true
-  def config_change(changed, _new, removed) do
-    AC.WebApi.Endpoint.config_change(changed, removed)
-    :ok
+  case Mix.env() do
+    :test ->
+      defp _get_children() do
+        []
+      end
+
+    _ ->
+      def _get_children() do
+        table_name = Application.get_env(:ac_web_api, :table_name)
+
+        [
+          AC.WebApi.Telemetry,
+          {Phoenix.PubSub, name: AC.WebApi.PubSub},
+          {AC.WebApi.Repo, table_name: table_name},
+          AC.WebApi.Endpoint
+        ]
+      end
   end
 end

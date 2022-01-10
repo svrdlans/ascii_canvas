@@ -4,6 +4,8 @@ config :ac_web_api, AC.WebApi.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   server: false
 
+config :ac_web_api, table_name: :canvases_test
+
 # Print only warnings and errors during test
 config :logger, level: :warn
 
