@@ -3,7 +3,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
 
   alias AC.WebApi.Canvas.Requests.Create
 
-  describe "Create.new/1" do
+  describe "Create.validate/1" do
     test "returns validation error for missing width and height" do
       params = %{}
 
@@ -14,7 +14,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                  width: {"can't be blank", [validation: :required]},
                  height: {"can't be blank", [validation: :required]}
                ]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error for missing width" do
@@ -24,7 +24,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                valid?: false,
                changes: %{height: 3},
                errors: [width: {"can't be blank", [validation: :required]}]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error for missing height" do
@@ -34,7 +34,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                valid?: false,
                changes: %{width: 3},
                errors: [height: {"can't be blank", [validation: :required]}]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error when width invalid type" do
@@ -44,7 +44,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                valid?: false,
                changes: %{height: 4},
                errors: [width: {"is invalid", [type: :integer, validation: :cast]}]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error when height invalid type" do
@@ -54,7 +54,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                valid?: false,
                changes: %{width: 3},
                errors: [height: {"is invalid", [type: :integer, validation: :cast]}]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error when width not greater than 0" do
@@ -68,7 +68,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                    {"must be greater than %{number}",
                     [validation: :number, kind: :greater_than, number: 0]}
                ]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error when width not less than or equal to 50" do
@@ -82,7 +82,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                    {"must be less than or equal to %{number}",
                     [validation: :number, kind: :less_than_or_equal_to, number: 50]}
                ]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
 
     test "returns validation error when height not less than or equal to 50" do
@@ -96,7 +96,7 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                    {"must be less than or equal to %{number}",
                     [validation: :number, kind: :less_than_or_equal_to, number: 50]}
                ]
-             } = Create.new(params)
+             } = Create.validate(params)
     end
   end
 end

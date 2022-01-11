@@ -6,8 +6,8 @@ defmodule Mix.Tasks.Bless do
   @impl Mix.Task
   def run(_) do
     [
+      {"compile", []},
       {"format", ["--check-formatted"]},
-      {"compile", ["--warnings-as-errors", "--force"]},
       {"coveralls.html", []},
       {"dialyzer", []}
     ]

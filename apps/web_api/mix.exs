@@ -22,6 +22,7 @@ defmodule AC.WebApi.MixProject do
         plt_add_apps: [:ecto, :ex_unit, :mix, :phoenix_pubsub, :plug]
       ],
       name: "AC WebApi",
+      aliases: _aliases(),
       deps: _deps()
     ]
   end
@@ -35,6 +36,12 @@ defmodule AC.WebApi.MixProject do
 
   defp _elixirc_paths(:test), do: ["lib", "test/support"]
   defp _elixirc_paths(_), do: ["lib"]
+
+  defp _aliases do
+    [
+      compile: "compile --warnings-as-errors --force"
+    ]
+  end
 
   defp _deps do
     [
@@ -50,7 +57,7 @@ defmodule AC.WebApi.MixProject do
       # test dependencies
       {:dialyxir, "~> 1.0", runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
-      {:faker, "~> 0.17", only: :test}
+      {:faker, "~> 0.17", only: [:test, :dev]}
     ]
   end
 end

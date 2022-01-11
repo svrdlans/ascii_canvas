@@ -1,4 +1,4 @@
-defmodule ACWebApiWeb.ErrorHelpers do
+defmodule AC.WebApi.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
