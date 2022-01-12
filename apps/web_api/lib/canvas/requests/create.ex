@@ -1,6 +1,6 @@
 defmodule AC.WebApi.Canvas.Requests.Create do
   @moduledoc """
-  Schema describing a canvas.
+  Schema for validating canvas create request.
   """
 
   use Ecto.Schema

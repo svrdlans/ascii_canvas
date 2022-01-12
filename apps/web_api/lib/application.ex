@@ -13,7 +13,9 @@ defmodule AC.WebApi.Application do
   case Mix.env() do
     :test ->
       defp _get_children() do
-        []
+        [
+          AC.WebApi.Endpoint
+        ]
       end
 
     _ ->

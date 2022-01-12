@@ -4,6 +4,7 @@ defmodule AC.WebApi do
       use Phoenix.Controller, namespace: AC.WebApi
 
       import Plug.Conn
+      alias AC.WebApi.Router.Helpers, as: Routes
     end
   end
 
@@ -13,6 +14,18 @@ defmodule AC.WebApi do
 
       import Plug.Conn
       import Phoenix.Controller
+    end
+  end
+
+  def view do
+    quote do
+      use Phoenix.View,
+        root: "lib/templates",
+        namespace: AC.WebApi
+
+      # Import convenience functions from controllers
+      import Phoenix.Controller,
+        only: [get_flash: 1, get_flash: 2, view_module: 1, view_template: 1]
     end
   end
 

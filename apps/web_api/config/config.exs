@@ -1,11 +1,10 @@
 import Config
 
-config :ac_web_api,
-  namespace: AC.WebApi
+config :ac_web_api, namespace: AC.WebApi
 
 config :ac_web_api, AC.WebApi.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "4P/ww0TY6vBEZgTv1cAhWkd0pw+XVACX3T9DCYe5fHDyqZgKRDaijGkuGp5zOcU1",
+  render_errors: [view: AC.WebApi.ErrorView, accepts: ~w(json), layout: false],
   pubsub_server: AC.WebApi.PubSub
 
 config :ac_web_api, table_name: :canvases

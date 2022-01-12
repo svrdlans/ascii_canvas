@@ -19,7 +19,7 @@ defmodule AC.WebApi.MixProject do
       ],
       dialyzer: [
         plt_add_deps: :apps_direct,
-        plt_add_apps: [:ecto, :ex_unit, :mix, :phoenix_pubsub, :plug]
+        plt_add_apps: [:ecto, :ex_unit, :mix, :phoenix_pubsub, :phoenix_view, :plug]
       ],
       name: "AC WebApi",
       aliases: _aliases(),
@@ -39,7 +39,7 @@ defmodule AC.WebApi.MixProject do
 
   defp _aliases do
     [
-      compile: "compile --warnings-as-errors --force"
+      bless: [&_bless/1]
     ]
   end
 
@@ -47,7 +47,6 @@ defmodule AC.WebApi.MixProject do
     [
       {:phoenix, "~> 1.6.5"},
       {:ecto, "~> 3.6"},
-      {:postgrex, ">= 0.0.0"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
@@ -59,5 +58,20 @@ defmodule AC.WebApi.MixProject do
       {:excoveralls, "~> 0.10", only: :test},
       {:faker, "~> 0.17", only: [:test, :dev]}
     ]
+  end
+
+  defp _bless(_) do
+    [
+      {"compile", ["--warnings-as-errors", "--force"]},
+      {"format", ["--check-formatted"]},
+      {"coveralls.html", []},
+      {"dialyzer", []}
+    ]
+    |> Enum.each(fn {task, args} ->
+      IO.ANSI.format([:blue, "Running #{task} with args #{inspect(args)}"])
+      |> IO.puts()
+
+      Mix.Task.run(task, args)
+    end)
   end
 end
