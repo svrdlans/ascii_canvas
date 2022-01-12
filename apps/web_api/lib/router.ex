@@ -5,12 +5,13 @@ defmodule AC.WebApi.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", AC.WebApi do
+  scope "/", AC.WebApi.Canvas do
     pipe_through :api
 
-    get "/canvases", Canvas.Controller, :index
-    post "/canvases", Canvas.Controller, :create
-    put "/canvases/:canvas_id/draw_rectangle", Canvas.Controller, :draw_rectangle
-    put "/canvases/:canvas_id/flood_fill", Canvas.Controller, :flood_fill
+    get "/canvases", Controller, :index
+    post "/canvases", Controller, :create
+    delete "/canvases/:id", Controller, :delete
+    put "/canvases/:id/draw_rectangle", Controller, :draw_rectangle
+    put "/canvases/:id/flood_fill", Controller, :flood_fill
   end
 end

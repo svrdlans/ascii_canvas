@@ -54,6 +54,30 @@ defmodule AC.WebApi.RepoTest do
     end
   end
 
+  describe "Repo.exists?/1" do
+    setup do
+      table_name = :test_table
+      {:ok, _pid} = Repo.start_link(table_name: table_name)
+
+      on_exit(fn ->
+        :ok = File.rm(to_string(table_name))
+      end)
+
+      :ok
+    end
+
+    test "returns false for key that does not exist" do
+      assert false == Repo.exists?(1)
+    end
+
+    test "returns true for existing key" do
+      key = Faker.generate(:uuid)
+      map = %{a: 1}
+      Repo.insert_or_update(key, map)
+      assert true == Repo.exists?(key)
+    end
+  end
+
   describe "Repo.get/1" do
     setup do
       table_name = :test_table

@@ -26,16 +26,21 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   describe "Controller.index/2" do
     test "returns 200 with empty list when no canvases", %{conn: conn} do
       conn = get(conn, "/canvases")
-      assert conn.status == 200
-      assert conn.resp_body == "[]"
+      assert [] = json_response(conn, 200)
     end
 
     test "returns 200 with list of items when canvases exist", %{conn: conn} do
-      :ok = _setup_canvases(2)
-
+      {:ok, ids} = _setup_canvases(2)
+      [id_1, id_2] = ids |> Enum.sort()
       conn = get(conn, "/canvases")
-      assert conn.status == 200
-      assert conn.resp_body |> byte_size() |> Kernel.>(100)
+
+      assert body = json_response(conn, 200)
+      body = body |> Enum.sort_by(&{&1["id"]})
+
+      assert [
+               %{"id" => ^id_1, "content" => _, "width" => _, "height" => _},
+               %{"id" => ^id_2, "content" => _, "width" => _, "height" => _}
+             ] = body
     end
   end
 
@@ -43,23 +48,41 @@ defmodule AC.WebApi.Canvas.ControllerTest do
     test "returns 201 with canvas id for valid params", %{conn: conn} do
       request = Fixtures.new_request(:create_canvas)
       conn = post(conn, "/canvases", request)
-      assert conn.status == 201
-      assert %{"id" => id} = conn.resp_body |> Jason.decode!()
+      assert %{"id" => id} = json_response(conn, 201)
       assert byte_size(id) == 36
     end
 
     test "returns 422 with validation error text for invalid width", %{conn: conn} do
       request = Fixtures.new_request(:create_canvas, %{width: "test"})
       conn = post(conn, "/canvases", request)
-      assert conn.status == 422
-      assert conn.resp_body == "{\"width\":[\"is invalid\"]}"
+      assert %{"width" => ["is invalid"]} = json_response(conn, 422)
     end
 
     test "returns 422 with validation error text for invalid height", %{conn: conn} do
       request = Fixtures.new_request(:create_canvas, %{height: 55})
       conn = post(conn, "/canvases", request)
-      assert conn.status == 422
-      assert conn.resp_body == "{\"height\":[\"must be less than or equal to 50\"]}"
+      assert %{"height" => ["must be less than or equal to 50"]} = json_response(conn, 422)
+    end
+  end
+
+  describe "Controller.delete/2" do
+    test "returns 204 when canvas id exists", %{conn: conn} do
+      {:ok, [id]} = _setup_canvases(1)
+      conn = delete(conn, "/canvases/#{id}")
+      assert conn.status == 204
+      assert conn.resp_body == ""
+    end
+
+    test "returns 404 when canvas id doesn't exist", %{conn: conn} do
+      uuid = Faker.generate(:uuid)
+      conn = delete(conn, "/canvases/#{uuid}")
+      assert conn.status == 404
+      assert conn.resp_body == ""
+    end
+
+    test "returns 422 when canvas id is invalid", %{conn: conn} do
+      conn = delete(conn, "/canvases/123")
+      assert %{"id" => ["is invalid"]} = json_response(conn, 422)
     end
   end
 
@@ -75,6 +98,6 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       Repo.insert_or_update(id, canvas)
     end)
 
-    :ok
+    {:ok, id_list}
   end
 end

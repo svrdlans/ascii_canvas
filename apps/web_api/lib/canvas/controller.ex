@@ -17,6 +17,12 @@ defmodule AC.WebApi.Canvas.Controller do
     |> Responder.respond_on(conn)
   end
 
+  def delete(conn, params) do
+    params
+    |> RequestHandler.process(&Requests.Delete.validate/1, &Handlers.Delete.handle/1)
+    |> Responder.respond_on(conn)
+  end
+
   def draw_rectangle(conn, _params) do
     conn
   end

@@ -1,4 +1,13 @@
 defmodule AC.WebApi.Repo do
+  @moduledoc """
+  A repo process which allows the use of Erlang `:dets`.
+
+  Since only on process is started in app supervison tree
+  guarantees that all access to table file is sequential.
+
+  Requires `:table_name` to be passed when calling `start_link/1`.
+  """
+
   use GenServer
 
   def start_link(opts) when is_list(opts),
@@ -13,6 +22,10 @@ defmodule AC.WebApi.Repo do
           :ok | {:error, any()}
   def insert_or_update(key, value),
     do: GenServer.call(__MODULE__, {:insert_or_update, key, value})
+
+  @spec exists?(key :: any()) :: boolean()
+  def exists?(key),
+    do: GenServer.call(__MODULE__, {:exists?, key})
 
   @spec get(key :: any()) :: nil | any() | {:error, any()}
   def get(key),
@@ -29,6 +42,12 @@ defmodule AC.WebApi.Repo do
   @impl true
   def handle_call({:insert_or_update, key, value}, _from, %{table_name: table_name} = state) do
     result = _wrap_access(table_name, fn -> :dets.insert(table_name, {key, value}) end)
+    {:reply, result, state}
+  end
+
+  @impl true
+  def handle_call({:exists?, key}, _from, %{table_name: table_name} = state) do
+    result = _wrap_access(table_name, fn -> :dets.member(table_name, key) end)
     {:reply, result, state}
   end
 

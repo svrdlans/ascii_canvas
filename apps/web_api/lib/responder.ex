@@ -1,5 +1,5 @@
 defmodule AC.WebApi.Responder do
-  import Plug.Conn, only: [put_status: 2]
+  import Plug.Conn, only: [put_status: 2, send_resp: 3]
   import Phoenix.Controller, only: [json: 2]
 
   alias AC.WebApi.Helpers.MapHelper
@@ -11,6 +11,11 @@ defmodule AC.WebApi.Responder do
           | {:validation_error, Ecto.Changeset.t()},
           Plug.Conn.t()
         ) :: Plug.Conn.t()
+  def respond_on(:ok, %Plug.Conn{} = conn) do
+    conn
+    |> send_resp(204, "")
+  end
+
   def respond_on({:ok, list}, %Plug.Conn{} = conn) when is_list(list) do
     payload = MapHelper.from_struct(list)
 
@@ -23,6 +28,11 @@ defmodule AC.WebApi.Responder do
     conn
     |> put_status(201)
     |> json(%{id: canvas_id})
+  end
+
+  def respond_on({:error, :not_found}, %Plug.Conn{} = conn) do
+    conn
+    |> send_resp(404, "")
   end
 
   def respond_on({:validation_error, changeset}, %Plug.Conn{} = conn) do
