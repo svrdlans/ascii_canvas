@@ -9,6 +9,7 @@ defmodule AC.WebApi.Router do
     pipe_through :api
 
     get "/canvases", Controller, :index
+    get "/canvases/:id", Controller, :show
     post "/canvases", Controller, :create
     delete "/canvases/:id", Controller, :delete
     put "/canvases/:id/draw_rectangle", Controller, :draw_rectangle

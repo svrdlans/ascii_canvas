@@ -14,6 +14,14 @@ defmodule AC.WebApi.Canvas.Controller do
     |> Responder.respond_on(conn)
   end
 
+  def show(conn, params) do
+    {:ok, repo} = AppConfig.get_repo_name()
+
+    params
+    |> RequestHandler.process(&Requests.Show.validate/2, &Handlers.Show.handle/2, repo)
+    |> Responder.respond_on(conn)
+  end
+
   def create(conn, params) do
     {:ok, repo} = AppConfig.get_repo_name()
 

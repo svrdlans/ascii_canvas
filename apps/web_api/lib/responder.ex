@@ -24,6 +24,14 @@ defmodule AC.WebApi.Responder do
     |> json(payload)
   end
 
+  def respond_on({:ok, %{__struct__: AC.WebApi.Canvas} = canvas}, %Plug.Conn{} = conn) do
+    payload = Map.from_struct(canvas)
+
+    conn
+    |> put_status(200)
+    |> json(payload)
+  end
+
   def respond_on({:created, canvas_id}, %Plug.Conn{} = conn) do
     conn
     |> put_status(201)

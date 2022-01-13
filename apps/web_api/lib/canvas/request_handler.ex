@@ -12,22 +12,10 @@ defmodule AC.WebApi.Canvas.RequestHandler do
 
   @spec process(
           params :: map(),
-          validator ::
-            (map -> Ecto.Changeset.t() | {:error, :not_found})
-            | (map, module() -> Ecto.Changeset.t() | {:error, :not_found}),
-          handler ::
-            (Ecto.Changeset.t() | {:error, :not_found} -> response())
-            | (Ecto.Changeset.t(), module() | {:error, :not_found} -> response()),
-          repo :: :none | module()
+          validator :: (map, nil | module() -> Ecto.Changeset.t() | {:error, :not_found}),
+          handler :: (Ecto.Changeset.t(), module() | {:error, :not_found} -> response()),
+          repo :: module()
         ) :: response()
-  def process(params, validator, handler, repo \\ :none)
-
-  def process(params, validator, handler, :none) do
-    params
-    |> validator.()
-    |> handler.()
-  end
-
   def process(params, validator, handler, repo) do
     params
     |> validator.(repo)

@@ -58,6 +58,26 @@ defmodule AC.WebApi.Canvas.ControllerTest do
     end
   end
 
+  describe "Controller.show/2" do
+    test "returns 200 when canvas id exists", %{conn: conn, name: repo} do
+      {:ok, %{canvases: [%{id: id, width: width, height: height}]}} = _setup_canvases(1, repo)
+      conn = get(conn, "/canvases/#{id}")
+      assert %{"id" => ^id, "width" => ^width, "height" => ^height} = json_response(conn, 200)
+    end
+
+    test "returns 404 when canvas id doesn't exist", %{conn: conn} do
+      uuid = Faker.generate(:uuid)
+      conn = get(conn, "/canvases/#{uuid}")
+      assert conn.status == 404
+      assert conn.resp_body == ""
+    end
+
+    test "returns 422 when canvas id is invalid", %{conn: conn} do
+      conn = get(conn, "/canvases/123")
+      assert %{"id" => ["is invalid"]} = json_response(conn, 422)
+    end
+  end
+
   describe "Controller.create/2" do
     test "returns 201 with canvas id for valid params", %{conn: conn} do
       request = Fixtures.new_request(:create_canvas)
@@ -81,7 +101,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
 
   describe "Controller.delete/2" do
     test "returns 204 when canvas id exists", %{conn: conn, name: repo} do
-      {:ok, %{id_list: [id]}} = _setup_canvases(1, repo)
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo)
       conn = delete(conn, "/canvases/#{id}")
       assert conn.status == 204
       assert conn.resp_body == ""
@@ -188,12 +208,9 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   defp _setup_canvases(count, repo, overrides \\ %{}) do
-    id_list =
+    canvases =
       1..count
       |> Enum.map(fn _ -> Faker.generate(:uuid) end)
-
-    canvases =
-      id_list
       |> Enum.reduce([], fn id, acc ->
         %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas, overrides)
         canvas = Canvas.create(width, height, fn -> id end)
@@ -202,6 +219,6 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       end)
       |> Enum.reverse()
 
-    {:ok, %{id_list: id_list, canvases: canvases}}
+    {:ok, %{canvases: canvases}}
   end
 end
