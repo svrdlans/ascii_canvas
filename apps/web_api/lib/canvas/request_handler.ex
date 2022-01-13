@@ -4,12 +4,16 @@ defmodule AC.WebApi.Canvas.RequestHandler do
   """
   alias AC.WebApi.Canvas
 
-  @type response() :: {:ok, Canvas.uuid()} | {:validation_error, Ecto.Changeset.t()}
+  @type response() ::
+          :ok
+          | {:ok, Canvas.uuid()}
+          | {:validation_error, Ecto.Changeset.t()}
+          | {:error, :not_found}
 
   @spec process(
           params :: map(),
-          validator :: (map -> Ecto.Changeset.t()),
-          handler :: (Ecto.Changeset.t() -> response())
+          validator :: (map -> Ecto.Changeset.t() | {:error, :not_found}),
+          handler :: (Ecto.Changeset.t() | {:error, :not_found} -> response())
         ) :: response()
   def process(params, validator, handler) do
     params

@@ -18,7 +18,7 @@ defmodule AC.WebApi.RepoTest do
     end
 
     test "process created for valid table name" do
-      table_name = :test_table
+      table_name = Application.get_env(:ac_web_api, :table_name)
       assert {:ok, pid} = Repo.start_link(table_name: table_name)
       assert Process.alive?(pid)
       assert %{table_name: ^table_name} = :sys.get_state(Repo)
@@ -26,16 +26,7 @@ defmodule AC.WebApi.RepoTest do
   end
 
   describe "Repo.insert_or_update/2" do
-    setup do
-      table_name = :test_table
-      {:ok, _pid} = Repo.start_link(table_name: table_name)
-
-      on_exit(fn ->
-        :ok = File.rm(to_string(table_name))
-      end)
-
-      [table_name: table_name]
-    end
+    setup :with_repo
 
     test "creates table if it doesn't exist", c do
       file_name = c.table_name |> Atom.to_string()
@@ -55,16 +46,7 @@ defmodule AC.WebApi.RepoTest do
   end
 
   describe "Repo.exists?/1" do
-    setup do
-      table_name = :test_table
-      {:ok, _pid} = Repo.start_link(table_name: table_name)
-
-      on_exit(fn ->
-        :ok = File.rm(to_string(table_name))
-      end)
-
-      :ok
-    end
+    setup :with_repo
 
     test "returns false for key that does not exist" do
       assert false == Repo.exists?(1)
@@ -79,16 +61,7 @@ defmodule AC.WebApi.RepoTest do
   end
 
   describe "Repo.get/1" do
-    setup do
-      table_name = :test_table
-      {:ok, _pid} = Repo.start_link(table_name: table_name)
-
-      on_exit(fn ->
-        :ok = File.rm(to_string(table_name))
-      end)
-
-      :ok
-    end
+    setup :with_repo
 
     test "returns nil for key that does not exist" do
       assert nil == Repo.get(1)
@@ -103,16 +76,7 @@ defmodule AC.WebApi.RepoTest do
   end
 
   describe "Repo.get_all/1" do
-    setup do
-      table_name = :test_table
-      {:ok, _pid} = Repo.start_link(table_name: table_name)
-
-      on_exit(fn ->
-        :ok = File.rm(to_string(table_name))
-      end)
-
-      :ok
-    end
+    setup :with_repo
 
     test "returns empty list for no values" do
       assert [] = Repo.get_all()
@@ -126,17 +90,7 @@ defmodule AC.WebApi.RepoTest do
   end
 
   describe "Repo.delete/1" do
-    setup do
-      table_name = :test_table
-      {:ok, _pid} = Repo.start_link(table_name: table_name)
-
-      on_exit(fn ->
-        :ok = File.rm(to_string(table_name))
-      end)
-
-      [table_name: table_name]
-    end
-
+    setup :with_repo
     setup :with_five_values
 
     test "returns :ok for key that doesn't exit" do
@@ -149,6 +103,17 @@ defmodule AC.WebApi.RepoTest do
       assert :ok = Repo.delete(key)
       assert nil == Repo.get(key)
     end
+  end
+
+  def with_repo(_c) do
+    table_name = Application.get_env(:ac_web_api, :table_name)
+    {:ok, _pid} = Repo.start_link(table_name: table_name)
+
+    on_exit(fn ->
+      :ok = File.rm(to_string(table_name))
+    end)
+
+    [table_name: table_name]
   end
 
   def with_five_values(_c) do

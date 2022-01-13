@@ -23,8 +23,13 @@ defmodule AC.WebApi.Canvas.Controller do
     |> Responder.respond_on(conn)
   end
 
-  def draw_rectangle(conn, _params) do
-    conn
+  def draw_rectangle(conn, params) do
+    params
+    |> RequestHandler.process(
+      &Requests.DrawRectangle.validate/1,
+      &Handlers.DrawRectangle.handle/1
+    )
+    |> Responder.respond_on(conn)
   end
 
   def flood_fill(conn, _params) do

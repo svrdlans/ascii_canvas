@@ -8,6 +8,8 @@ defmodule AC.WebApi.Repo do
   Requires `:table_name` to be passed when calling `start_link/1`.
   """
 
+  alias AC.WebApi.Canvas
+
   use GenServer
 
   def start_link(opts) when is_list(opts),
@@ -18,24 +20,24 @@ defmodule AC.WebApi.Repo do
     {:ok, %{table_name: table_name}}
   end
 
-  @spec insert_or_update(key :: any(), value :: any()) ::
+  @spec insert_or_update(key :: Canvas.uuid() | any(), value :: Canvas.t() | any()) ::
           :ok | {:error, any()}
   def insert_or_update(key, value),
     do: GenServer.call(__MODULE__, {:insert_or_update, key, value})
 
-  @spec exists?(key :: any()) :: boolean()
+  @spec exists?(key :: Canvas.uuid() | any()) :: boolean()
   def exists?(key),
     do: GenServer.call(__MODULE__, {:exists?, key})
 
-  @spec get(key :: any()) :: nil | any() | {:error, any()}
+  @spec get(key :: Canvas.uuid() | any()) :: nil | Canvas.t() | any() | {:error, any()}
   def get(key),
     do: GenServer.call(__MODULE__, {:get, key})
 
-  @spec get_all() :: [any()] | {:error, any()}
+  @spec get_all() :: [Canvas.t() | any()] | {:error, any()}
   def get_all(),
     do: GenServer.call(__MODULE__, :get_all)
 
-  @spec delete(key :: any()) :: :ok | {:error, any()}
+  @spec delete(key :: Canvas.t() | any()) :: :ok | {:error, any()}
   def delete(key),
     do: GenServer.call(__MODULE__, {:delete, key})
 

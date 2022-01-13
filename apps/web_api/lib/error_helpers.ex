@@ -3,6 +3,9 @@ defmodule AC.WebApi.ErrorHelpers do
   Conveniences for translating and building error messages.
   """
 
+  @not_found "not found"
+  @id_not_found {:id, {@not_found, []}}
+
   @doc """
   Translates an error message.
   """
@@ -11,6 +14,15 @@ defmodule AC.WebApi.ErrorHelpers do
     # are defined inside Ecto, we need to translate them dynamically.
     Enum.reduce(opts, msg, fn {key, value}, acc ->
       String.replace(acc, "%{#{key}}", fn _ -> to_string(value) end)
+    end)
+  end
+
+  @spec id_not_found?(keyword()) :: boolean()
+  def id_not_found?(errors) when is_list(errors) do
+    errors
+    |> Enum.any?(fn
+      @id_not_found -> true
+      _ -> false
     end)
   end
 end

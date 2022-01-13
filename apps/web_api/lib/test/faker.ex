@@ -8,4 +8,9 @@ defmodule AC.WebApi.Test.Faker do
     max = Keyword.fetch!(opts, :max)
     Faker.random_between(min, max)
   end
+
+  def generate(:ascii_string, opts) do
+    size = Keyword.fetch!(opts, :size)
+    Faker.random_bytes(size)
+  end
 end

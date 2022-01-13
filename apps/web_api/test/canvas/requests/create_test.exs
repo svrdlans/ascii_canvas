@@ -98,5 +98,10 @@ defmodule AC.WebApi.Canvas.Requests.CreateTest do
                ]
              } = Create.validate(params)
     end
+
+    test "returns valid changeset when widht and height less than or equal to 50" do
+      params = %{"width" => 3, "height" => 5}
+      assert %Ecto.Changeset{valid?: true} = Create.validate(params)
+    end
   end
 end

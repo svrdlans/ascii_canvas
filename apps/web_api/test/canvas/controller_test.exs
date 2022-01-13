@@ -30,16 +30,29 @@ defmodule AC.WebApi.Canvas.ControllerTest do
     end
 
     test "returns 200 with list of items when canvases exist", %{conn: conn} do
-      {:ok, ids} = _setup_canvases(2)
-      [id_1, id_2] = ids |> Enum.sort()
+      {:ok, %{canvases: canvases}} = _setup_canvases(2)
+
+      [
+        %{id: id_1, content: _, width: width_1, height: height_1},
+        %{id: id_2, content: _, width: width_2, height: height_2}
+      ] = canvases |> Enum.sort_by(&{&1.id})
+
       conn = get(conn, "/canvases")
 
       assert body = json_response(conn, 200)
       body = body |> Enum.sort_by(&{&1["id"]})
 
       assert [
-               %{"id" => ^id_1, "content" => _, "width" => _, "height" => _},
-               %{"id" => ^id_2, "content" => _, "width" => _, "height" => _}
+               %{
+                 "id" => ^id_1,
+                 "width" => ^width_1,
+                 "height" => ^height_1
+               },
+               %{
+                 "id" => ^id_2,
+                 "width" => ^width_2,
+                 "height" => ^height_2
+               }
              ] = body
     end
   end
@@ -67,7 +80,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
 
   describe "Controller.delete/2" do
     test "returns 204 when canvas id exists", %{conn: conn} do
-      {:ok, [id]} = _setup_canvases(1)
+      {:ok, %{id_list: [id]}} = _setup_canvases(1)
       conn = delete(conn, "/canvases/#{id}")
       assert conn.status == 204
       assert conn.resp_body == ""
@@ -86,18 +99,104 @@ defmodule AC.WebApi.Canvas.ControllerTest do
     end
   end
 
-  defp _setup_canvases(count) do
+  describe "Controller.draw_rectangle/2" do
+    test "returns 204 when canvas id exists and params are valid", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 2],
+          width: 5,
+          height: 3,
+          outline: "@",
+          fill: nil
+        })
+
+      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
+      assert conn.status == 204
+      assert conn.resp_body == ""
+    end
+
+    test "returns 404 when canvas id doesn't exist", %{conn: conn} do
+      uuid = Faker.generate(:uuid)
+      conn = delete(conn, "/canvases/#{uuid}")
+      assert conn.status == 404
+      assert conn.resp_body == ""
+    end
+
+    test "returns 422 when canvas id is invalid", %{conn: conn} do
+      conn = delete(conn, "/canvases/123")
+      assert %{"id" => ["is invalid"]} = json_response(conn, 422)
+    end
+
+    test "returns 422 when x coord is out of bounds", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [10, 5],
+          width: 5,
+          height: 3,
+          outline: "@",
+          fill: nil
+        })
+
+      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
+      assert %{"coords" => ["x coordinate must be between 0 and 9"]} = json_response(conn, 422)
+    end
+
+    test "returns 422 when y coord is out of bounds", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [9, 7],
+          width: 5,
+          height: 3,
+          outline: "@",
+          fill: nil
+        })
+
+      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
+      assert %{"coords" => ["y coordinate must be between 0 and 6"]} = json_response(conn, 422)
+    end
+
+    test "returns 422 when coords is not a list of 2", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 2, 5],
+          width: 5,
+          height: 3,
+          outline: "@",
+          fill: nil
+        })
+
+      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
+      assert %{"coords" => ["should have 2 item(s)"]} = json_response(conn, 422)
+    end
+  end
+
+  defp _setup_canvases(count, overrides \\ %{}) do
     id_list =
       1..count
       |> Enum.map(fn _ -> Faker.generate(:uuid) end)
 
-    id_list
-    |> Enum.map(fn id ->
-      %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas)
-      canvas = Canvas.create(width, height, fn -> id end)
-      Repo.insert_or_update(id, canvas)
-    end)
+    canvases =
+      id_list
+      |> Enum.reduce([], fn id, acc ->
+        %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas, overrides)
+        canvas = Canvas.create(width, height, fn -> id end)
+        Repo.insert_or_update(id, canvas)
+        [canvas | acc]
+      end)
+      |> Enum.reverse()
 
-    {:ok, id_list}
+    {:ok, %{id_list: id_list, canvases: canvases}}
   end
 end

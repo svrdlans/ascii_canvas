@@ -6,7 +6,7 @@ defmodule AC.WebApi.Canvas do
 
   @type uuid() :: <<_::288>>
 
-  @type content() :: %{non_neg_integer => %{non_neg_integer => nil | char()}}
+  @type content() :: %{non_neg_integer => %{non_neg_integer => nil | String.t()}}
 
   @type id_fun() :: (() -> uuid())
 
