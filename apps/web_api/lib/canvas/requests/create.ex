@@ -16,8 +16,8 @@ defmodule AC.WebApi.Canvas.Requests.Create do
     field :height, :integer
   end
 
-  @spec validate(params :: map()) :: Ecto.Changeset.t()
-  def validate(params) do
+  @spec validate(params :: map(), repo :: module()) :: Ecto.Changeset.t()
+  def validate(params, _repo \\ nil) do
     fields = ~w(width height)a
 
     %__MODULE__{}

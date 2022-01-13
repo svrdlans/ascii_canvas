@@ -20,12 +20,12 @@ defmodule AC.WebApi.Application do
 
     _ ->
       def _get_children() do
-        table_name = Application.get_env(:ac_web_api, :table_name)
+        {:ok, repo_config} = AC.WebApi.Helpers.AppConfig.get_repo_config()
 
         [
           AC.WebApi.Telemetry,
           {Phoenix.PubSub, name: AC.WebApi.PubSub},
-          {AC.WebApi.Repo, table_name: table_name},
+          {AC.WebApi.Repo, repo_config},
           AC.WebApi.Endpoint
         ]
       end

@@ -38,23 +38,9 @@ defmodule AC.WebApi.Canvas.Draw do
 
   def fill_coords([[_, _] = pair | rest], %{content: content} = canvas, params) do
     char = get_fill_char(pair, params)
-    canvas = %{canvas | content: put_char(content, pair, char)}
+    canvas = %{canvas | content: put_in(content, pair, char)}
     fill_coords(rest, canvas, params)
   end
-
-  @spec put_char(content :: Canvas.content(), pair :: [non_neg_integer()], char :: char()) ::
-          Canvas.content()
-  def put_char(%{} = content, [x, y] = pair, char) when is_map_key(content, x) do
-    content[x]
-    |> Map.has_key?(y)
-    |> if do
-      put_in(content, pair, char)
-    else
-      content
-    end
-  end
-
-  def put_char(content, _, _), do: content
 
   @spec get_coords_to_fill(params :: fill_params()) :: [[non_neg_integer()]]
   def get_coords_to_fill(%{coords: [x, y], borders: [border_x, border_y]}),

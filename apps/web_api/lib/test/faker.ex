@@ -11,6 +11,12 @@ defmodule AC.WebApi.Test.Faker do
 
   def generate(:ascii_string, opts) do
     size = Keyword.fetch!(opts, :size)
-    Faker.random_bytes(size)
+
+    for _ <- 1..size,
+        do:
+          0
+          |> Faker.random_between(127)
+          |> :binary.encode_unsigned(),
+        into: ""
   end
 end

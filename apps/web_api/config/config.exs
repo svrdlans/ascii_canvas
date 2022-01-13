@@ -7,7 +7,7 @@ config :ac_web_api, AC.WebApi.Endpoint,
   render_errors: [view: AC.WebApi.ErrorView, accepts: ~w(json), layout: false],
   pubsub_server: AC.WebApi.PubSub
 
-config :ac_web_api, table_name: :canvases
+config :ac_web_api, :repo, table_name: :canvases
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

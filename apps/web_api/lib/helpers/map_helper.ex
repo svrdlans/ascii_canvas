@@ -4,7 +4,6 @@ defmodule AC.WebApi.Helpers.MapHelper do
     list
     |> Enum.map(fn
       %_{} = st -> Map.from_struct(st)
-      %{} = map -> map
     end)
   end
 end

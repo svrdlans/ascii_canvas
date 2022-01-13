@@ -7,20 +7,21 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   alias AC.WebApi.Fixtures
 
   setup do
-    table_name = Application.get_env(:ac_web_api, :table_name)
-    {:ok, _pid} = Repo.start_link(table_name: table_name)
+    repo_config = [table_name: :controller_tests, name: ControllerTest]
+    :ok = Application.put_env(:ac_web_api, :repo, repo_config)
+
+    {:ok, _pid} = start_supervised({Repo, repo_config}, restart: :temporary)
 
     on_exit(fn ->
-      to_string(table_name)
+      repo_config[:table_name]
+      |> to_string()
       |> File.exists?()
       |> if do
-        :ok = File.rm(to_string(table_name))
-      else
-        :ok
+        :ok = File.rm(to_string(repo_config[:table_name]))
       end
     end)
 
-    [table_name: table_name]
+    repo_config
   end
 
   describe "Controller.index/2" do
@@ -29,8 +30,8 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       assert [] = json_response(conn, 200)
     end
 
-    test "returns 200 with list of items when canvases exist", %{conn: conn} do
-      {:ok, %{canvases: canvases}} = _setup_canvases(2)
+    test "returns 200 with list of items when canvases exist", %{conn: conn, name: repo} do
+      {:ok, %{canvases: canvases}} = _setup_canvases(2, repo)
 
       [
         %{id: id_1, content: _, width: width_1, height: height_1},
@@ -79,8 +80,8 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.delete/2" do
-    test "returns 204 when canvas id exists", %{conn: conn} do
-      {:ok, %{id_list: [id]}} = _setup_canvases(1)
+    test "returns 204 when canvas id exists", %{conn: conn, name: repo} do
+      {:ok, %{id_list: [id]}} = _setup_canvases(1, repo)
       conn = delete(conn, "/canvases/#{id}")
       assert conn.status == 204
       assert conn.resp_body == ""
@@ -100,8 +101,8 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.draw_rectangle/2" do
-    test "returns 204 when canvas id exists and params are valid", %{conn: conn} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+    test "returns 204 when canvas id exists and params are valid", %{conn: conn, name: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 7})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -130,8 +131,8 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       assert %{"id" => ["is invalid"]} = json_response(conn, 422)
     end
 
-    test "returns 422 when x coord is out of bounds", %{conn: conn} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+    test "returns 422 when x coord is out of bounds", %{conn: conn, name: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 7})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -144,11 +145,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
         })
 
       conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
-      assert %{"coords" => ["x coordinate must be between 0 and 9"]} = json_response(conn, 422)
+
+      assert %{"coords" => ["out of bounds: x must be between 0 and 9"]} =
+               json_response(conn, 422)
     end
 
-    test "returns 422 when y coord is out of bounds", %{conn: conn} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+    test "returns 422 when y coord is out of bounds", %{conn: conn, name: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 7})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -161,11 +164,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
         })
 
       conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
-      assert %{"coords" => ["y coordinate must be between 0 and 6"]} = json_response(conn, 422)
+
+      assert %{"coords" => ["out of bounds: y must be between 0 and 6"]} =
+               json_response(conn, 422)
     end
 
-    test "returns 422 when coords is not a list of 2", %{conn: conn} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
+    test "returns 422 when coords is not a list of 2", %{conn: conn, name: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 7})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -182,7 +187,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
     end
   end
 
-  defp _setup_canvases(count, overrides \\ %{}) do
+  defp _setup_canvases(count, repo, overrides \\ %{}) do
     id_list =
       1..count
       |> Enum.map(fn _ -> Faker.generate(:uuid) end)
@@ -192,7 +197,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       |> Enum.reduce([], fn id, acc ->
         %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas, overrides)
         canvas = Canvas.create(width, height, fn -> id end)
-        Repo.insert_or_update(id, canvas)
+        Repo.insert_or_update(repo, id, canvas)
         [canvas | acc]
       end)
       |> Enum.reverse()

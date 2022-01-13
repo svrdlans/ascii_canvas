@@ -16,14 +16,14 @@ defmodule AC.WebApi.Canvas.Requests.Delete do
 
   @not_found "not found"
 
-  @spec validate(params :: map()) :: Ecto.Changeset.t()
-  def validate(params) do
+  @spec validate(params :: map(), repo :: module()) :: Ecto.Changeset.t()
+  def validate(params, repo) when is_atom(repo) do
     fields = [:id]
 
     %__MODULE__{}
     |> Ecto.Changeset.cast(params, fields)
     |> Ecto.Changeset.validate_required(fields)
-    |> _validate_id_exists()
+    |> _validate_id_exists(repo)
   end
 
   @spec changes(Ecto.Changeset.t()) :: t()
@@ -32,12 +32,12 @@ defmodule AC.WebApi.Canvas.Requests.Delete do
     |> Ecto.Changeset.apply_changes()
   end
 
-  @spec _validate_id_exists(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp _validate_id_exists(%Ecto.Changeset{valid?: false} = cs),
+  @spec _validate_id_exists(Ecto.Changeset.t(), module()) :: Ecto.Changeset.t()
+  defp _validate_id_exists(%Ecto.Changeset{valid?: false} = cs, _),
     do: cs
 
-  defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}} = cs) do
-    if Repo.exists?(id) do
+  defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}} = cs, repo) do
+    if Repo.exists?(repo, id) do
       cs
     else
       Ecto.Changeset.add_error(cs, :id, @not_found)

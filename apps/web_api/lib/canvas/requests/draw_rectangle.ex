@@ -29,15 +29,15 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
 
   @not_found "not found"
 
-  @spec validate(params :: map()) :: Ecto.Changeset.t()
-  def validate(params) do
+  @spec validate(params :: map(), repo :: module()) :: Ecto.Changeset.t()
+  def validate(params, repo) when is_atom(repo) do
     required_fields = ~w(id coords width height)a
     optional_fields = ~w(outline fill)a
 
     %__MODULE__{}
     |> Ecto.Changeset.cast(params, required_fields ++ optional_fields)
     |> Ecto.Changeset.validate_required(required_fields)
-    |> _validate_id_exists()
+    |> _validate_id_exists(repo)
     |> Ecto.Changeset.validate_length(:coords, is: 2)
     |> _validate_number(:coords)
     |> _validate_number(:width)
@@ -53,12 +53,12 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
     |> Ecto.Changeset.apply_changes()
   end
 
-  @spec _validate_id_exists(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp _validate_id_exists(%Ecto.Changeset{valid?: false} = cs),
+  @spec _validate_id_exists(Ecto.Changeset.t(), module()) :: Ecto.Changeset.t()
+  defp _validate_id_exists(%Ecto.Changeset{valid?: false} = cs, _),
     do: cs
 
-  defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}, params: params} = cs) do
-    case Repo.get(id) do
+  defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}, params: params} = cs, repo) do
+    case Repo.get(repo, id) do
       nil ->
         Ecto.Changeset.add_error(cs, :id, @not_found)
 
@@ -67,7 +67,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
           cs
           | params:
               params
-              |> Map.merge(%{"__canvas_max_x" => width - 1, "__canvas_max_y" => height - 1})
+              |> Map.merge(%{"__canvas_width" => width, "__canvas_height" => height})
         }
     end
   end
@@ -78,21 +78,33 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   defp _validate_number(
          %Ecto.Changeset{
            changes: %{coords: [x, y]},
-           params: %{"__canvas_max_x" => max_x, "__canvas_max_y" => max_y}
+           params: %{"__canvas_width" => canvas_width, "__canvas_height" => canvas_height}
          } = cs,
          :coords
        ) do
-    with {:x, true} <- {:x, x >= 0 and x <= max_x},
-         {:y, true} <- {:y, y >= 0 and y <= max_y} do
-      cs
-    else
-      {:x, _} ->
-        Ecto.Changeset.add_error(cs, :coords, "x coordinate must be between 0 and %{max_x}",
+    max_x = canvas_width - 1
+    max_y = canvas_height - 1
+
+    case {{:x, x >= 0 and x <= max_x}, {:y, y >= 0 and y <= max_y}} do
+      {{:x, true}, {:y, true}} ->
+        cs
+
+      {{:x, false}, {:y, true}} ->
+        Ecto.Changeset.add_error(cs, :coords, "out of bounds: x must be between 0 and %{max_x}",
           max_x: max_x
         )
 
-      {:y, _} ->
-        Ecto.Changeset.add_error(cs, :coords, "y coordinate must be between 0 and %{max_y}",
+      {{:x, true}, {:y, false}} ->
+        Ecto.Changeset.add_error(cs, :coords, "out of bounds: y must be between 0 and %{max_y}",
+          max_y: max_y
+        )
+
+      {{:x, false}, {:y, false}} ->
+        Ecto.Changeset.add_error(
+          cs,
+          :coords,
+          "out of bounds: x must be between 0 and %{max_x}, y between 0 and %{max_y}",
+          max_x: max_x,
           max_y: max_y
         )
     end
@@ -101,22 +113,22 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   defp _validate_number(
          %Ecto.Changeset{
            changes: %{coords: [x, _]},
-           params: %{"__canvas_max_x" => canvas_max_x}
+           params: %{"__canvas_width" => width}
          } = cs,
          :width
        ) do
-    max_value = canvas_max_x - x + 1
+    max_value = width - x - 1
     Ecto.Changeset.validate_number(cs, :width, greater_than: 0, less_than_or_equal_to: max_value)
   end
 
   defp _validate_number(
          %Ecto.Changeset{
            changes: %{coords: [_, y]},
-           params: %{"__canvas_max_y" => canvas_max_y}
+           params: %{"__canvas_height" => height}
          } = cs,
          :height
        ) do
-    max_value = canvas_max_y - y + 1
+    max_value = height - y - 1
     Ecto.Changeset.validate_number(cs, :height, greater_than: 0, less_than_or_equal_to: max_value)
   end
 
@@ -136,20 +148,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   defp _validate_ascii(%Ecto.Changeset{changes: changes} = cs, field) do
     changes
     |> Map.get(field)
-    |> String.to_charlist()
     |> case do
-      [] ->
-        false
-
-      value ->
-        value
-        |> hd()
-        |> Kernel.in(0..127)
-    end
-    |> if do
-      cs
-    else
-      Ecto.Changeset.add_error(cs, field, "must be a valid ASCII character")
+      <<0::size(1), _::size(7)>> -> cs
+      _ -> Ecto.Changeset.add_error(cs, field, "must be a valid ASCII character")
     end
   end
 

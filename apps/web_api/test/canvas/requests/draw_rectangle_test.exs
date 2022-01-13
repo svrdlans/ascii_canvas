@@ -7,26 +7,26 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
   alias AC.WebApi.Repo
   alias AC.WebApi.Test.Faker
 
-  describe "DrawRectangle.validate/1" do
+  describe "DrawRectangle.validate/2" do
     setup :with_repo
 
-    test "returns validation error for invalid id" do
+    test "returns validation error for invalid id", %{repo: repo} do
       request = Fixtures.new_request(:draw_rectangle, %{id: 234})
 
       assert %Ecto.Changeset{
                valid?: false,
                errors: [id: {"is invalid", [type: Ecto.UUID, validation: :cast]}]
-             } = DrawRectangle.validate(request)
+             } = DrawRectangle.validate(request, repo)
     end
 
-    test "returns id not_found when id doesn't exist" do
+    test "returns id not_found when id doesn't exist", %{repo: repo} do
       request = Fixtures.new_request(:draw_rectangle)
 
       assert %Ecto.Changeset{valid?: false, errors: [id: {"not found", []}]} =
-               DrawRectangle.validate(request)
+               DrawRectangle.validate(request, repo)
     end
 
-    test "returns validation error when required fields are not present" do
+    test "returns validation error when required fields are not present", %{repo: repo} do
       assert %Ecto.Changeset{
                valid?: false,
                errors: [
@@ -35,11 +35,11 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                  width: {"can't be blank", [validation: :required]},
                  height: {"can't be blank", [validation: :required]}
                ]
-             } = DrawRectangle.validate(%{})
+             } = DrawRectangle.validate(%{}, repo)
     end
 
-    test "returns validation error when coords is a list of strings" do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
+    test "returns validation error when coords is a list of strings", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{id: id, coords: ["a", "b"], width: 1, height: 1})
@@ -47,11 +47,11 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       assert %Ecto.Changeset{
                valid?: false,
                errors: [coords: {"is invalid", [type: {:array, :integer}, validation: :cast]}]
-             } = DrawRectangle.validate(request)
+             } = DrawRectangle.validate(request, repo)
     end
 
-    test "returns validation error when coords isn't a list of 2" do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
+    test "returns validation error when coords isn't a list of 2", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{id: id, coords: [1, 2, 4], width: 1, height: 1})
@@ -63,66 +63,253 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                    {"should have %{count} item(s)",
                     [count: 2, validation: :length, kind: :is, type: :list]}
                ]
-             } = DrawRectangle.validate(request)
+             } = DrawRectangle.validate(request, repo)
     end
 
-    test "returns validation error when x coord out of bounds" do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
+    test "returns validation error when x coord out of bounds", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [10, 5], width: 1, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [10, 4], width: 1, height: 1})
 
       assert %Ecto.Changeset{
                valid?: false,
-               errors: [coords: {"x coordinate must be between 0 and %{max_x}", [max_x: 9]}]
-             } = DrawRectangle.validate(request)
+               errors: [coords: {"out of bounds: x must be between 0 and %{max_x}", [max_x: 9]}]
+             } = DrawRectangle.validate(request, repo)
     end
 
-    test "returns validation error when y coord out of bounds" do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
+    test "returns validation error when y coord out of bounds", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{id: id, coords: [9, 5], width: 1, height: 1})
 
       assert %Ecto.Changeset{
                valid?: false,
-               errors: [coords: {"y coordinate must be between 0 and %{max_y}", [max_y: 4]}]
-             } = DrawRectangle.validate(request)
+               errors: [coords: {"out of bounds: y must be between 0 and %{max_y}", [max_y: 4]}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when [x, y] is out of bounds", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [10, 5], width: 1, height: 1})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 coords:
+                   {"out of bounds: x must be between 0 and %{max_x}, y between 0 and %{max_y}",
+                    [max_x: 9, max_y: 4]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when width is out of bounds", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 4], width: 2, height: 1})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 width:
+                   {"must be less than or equal to %{number}",
+                    [validation: :number, kind: :less_than_or_equal_to, number: 1]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when height is out of bounds", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 2], width: 1, height: 3})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 height:
+                   {"must be less than or equal to %{number}",
+                    [validation: :number, kind: :less_than_or_equal_to, number: 2]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline can't be cast to string", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          outline: 'a'
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [outline: {"is invalid", [type: :string, validation: :cast]}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline has size > 1", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          outline: "ab"
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 outline:
+                   {"should be %{count} character(s)",
+                    [count: 1, validation: :length, kind: :is, type: :string]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline is not an ascii string", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          outline: <<255>>
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [outline: {"must be a valid ASCII character", []}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill can't be cast to string", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          fill: 'a'
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [fill: {"is invalid", [type: :string, validation: :cast]}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill has size > 1", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          fill: "ab"
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 fill:
+                   {"should be %{count} character(s)",
+                    [count: 1, validation: :length, kind: :is, type: :string]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill is not an ascii string", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          fill: <<255>>
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [fill: {"must be a valid ASCII character", []}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when neither outline nor fill are present", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          coords: [3, 1],
+          width: 4,
+          height: 3,
+          outline: nil,
+          fill: nil
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 outline: {"one of either these fields must be present: [:outline, :fill]", []}
+               ]
+             } = DrawRectangle.validate(request, repo)
     end
   end
 
   def with_repo(_c) do
-    table_name = Application.get_env(:ac_web_api, :table_name)
-    {:ok, _pid} = Repo.start_link(table_name: table_name)
+    table_name = :draw_tests
+    name = DrawTest
+
+    {:ok, _pid} =
+      start_supervised({Repo, table_name: table_name, name: name}, restart: :temporary)
 
     on_exit(fn ->
-      to_string(table_name)
+      table_name
+      |> Atom.to_string()
       |> File.exists?()
       |> if do
         :ok = File.rm(to_string(table_name))
-      else
-        :ok
       end
+
+      :ok
     end)
 
-    [table_name: table_name]
+    [table_name: table_name, repo: name]
   end
 
-  defp _setup_canvases(count, overrides) do
-    id_list =
-      1..count
-      |> Enum.map(fn _ -> Faker.generate(:uuid) end)
-
+  defp _setup_canvases(count, repo, overrides) do
     canvases =
-      id_list
+      for _ <- 1..count do
+        Faker.generate(:uuid)
+      end
       |> Enum.reduce([], fn id, acc ->
         %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas, overrides)
         canvas = Canvas.create(width, height, fn -> id end)
-        Repo.insert_or_update(id, canvas)
+        Repo.insert_or_update(repo, id, canvas)
         [canvas | acc]
       end)
       |> Enum.reverse()
 
-    {:ok, %{id_list: id_list, canvases: canvases}}
+    {:ok, %{canvases: canvases}}
   end
 end
