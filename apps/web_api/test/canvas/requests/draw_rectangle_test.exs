@@ -110,14 +110,14 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 4], width: 2, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 4], width: 3, height: 2})
 
       assert %Ecto.Changeset{
                valid?: false,
                errors: [
                  width:
                    {"must be less than or equal to %{number}",
-                    [validation: :number, kind: :less_than_or_equal_to, number: 1]}
+                    [validation: :number, kind: :less_than_or_equal_to, number: 2]}
                ]
              } = DrawRectangle.validate(request, repo)
     end
@@ -126,14 +126,14 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 2], width: 1, height: 3})
+        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 2], width: 2, height: 4})
 
       assert %Ecto.Changeset{
                valid?: false,
                errors: [
                  height:
                    {"must be less than or equal to %{number}",
-                    [validation: :number, kind: :less_than_or_equal_to, number: 2]}
+                    [validation: :number, kind: :less_than_or_equal_to, number: 3]}
                ]
              } = DrawRectangle.validate(request, repo)
     end

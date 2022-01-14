@@ -113,22 +113,22 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   defp _validate_number(
          %Ecto.Changeset{
            changes: %{coords: [x, _]},
-           params: %{"__canvas_width" => width}
+           params: %{"__canvas_width" => canvas_width}
          } = cs,
          :width
        ) do
-    max_value = width - x - 1
+    max_value = canvas_width - x
     Ecto.Changeset.validate_number(cs, :width, greater_than: 0, less_than_or_equal_to: max_value)
   end
 
   defp _validate_number(
          %Ecto.Changeset{
            changes: %{coords: [_, y]},
-           params: %{"__canvas_height" => height}
+           params: %{"__canvas_height" => canvas_height}
          } = cs,
          :height
        ) do
-    max_value = height - y - 1
+    max_value = canvas_height - y
     Ecto.Changeset.validate_number(cs, :height, greater_than: 0, less_than_or_equal_to: max_value)
   end
 
