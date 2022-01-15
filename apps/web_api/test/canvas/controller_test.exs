@@ -127,7 +127,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 2],
+          upper_left_corner: [3, 2],
           width: 5,
           height: 3,
           outline: "@",
@@ -157,7 +157,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [10, 5],
+          upper_left_corner: [10, 5],
           width: 5,
           height: 3,
           outline: "@",
@@ -166,7 +166,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
 
       conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
 
-      assert %{"coords" => ["out of bounds: x must be between 0 and 9"]} =
+      assert %{"upper_left_corner" => ["out of bounds: x must be between 0 and 9"]} =
                json_response(conn, 422)
     end
 
@@ -176,7 +176,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [9, 7],
+          upper_left_corner: [9, 7],
           width: 5,
           height: 3,
           outline: "@",
@@ -185,17 +185,17 @@ defmodule AC.WebApi.Canvas.ControllerTest do
 
       conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
 
-      assert %{"coords" => ["out of bounds: y must be between 0 and 6"]} =
+      assert %{"upper_left_corner" => ["out of bounds: y must be between 0 and 6"]} =
                json_response(conn, 422)
     end
 
-    test "returns 422 when coords is not a list of 2", %{conn: conn, name: repo} do
+    test "returns 422 when upper_left_corner is not a list of 2", %{conn: conn, name: repo} do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 7})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 2, 5],
+          upper_left_corner: [3, 2, 5],
           width: 5,
           height: 3,
           outline: "@",
@@ -203,7 +203,7 @@ defmodule AC.WebApi.Canvas.ControllerTest do
         })
 
       conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
-      assert %{"coords" => ["should have 2 item(s)"]} = json_response(conn, 422)
+      assert %{"upper_left_corner" => ["should have 2 item(s)"]} = json_response(conn, 422)
     end
   end
 

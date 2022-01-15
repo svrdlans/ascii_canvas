@@ -10,7 +10,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
 
   @type t() :: %__MODULE__{
           id: Canvas.uuid(),
-          coords: [non_neg_integer()],
+          upper_left_corner: [non_neg_integer()],
           width: pos_integer(),
           height: pos_integer(),
           outline: String.t(),
@@ -20,7 +20,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   @primary_key false
   embedded_schema do
     field :id, Ecto.UUID
-    field :coords, {:array, :integer}
+    field :upper_left_corner, {:array, :integer}
     field :width, :integer
     field :height, :integer
     field :outline, :string
@@ -31,15 +31,15 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
 
   @spec validate(params :: map(), repo :: module()) :: Ecto.Changeset.t()
   def validate(params, repo) when is_atom(repo) do
-    required_fields = ~w(id coords width height)a
+    required_fields = ~w(id upper_left_corner width height)a
     optional_fields = ~w(outline fill)a
 
     %__MODULE__{}
     |> Ecto.Changeset.cast(params, required_fields ++ optional_fields)
     |> Ecto.Changeset.validate_required(required_fields)
     |> _validate_id_exists(repo)
-    |> Ecto.Changeset.validate_length(:coords, is: 2)
-    |> _validate_number(:coords)
+    |> Ecto.Changeset.validate_length(:upper_left_corner, is: 2)
+    |> _validate_boundaries()
     |> _validate_number(:width)
     |> _validate_number(:height)
     |> _validate_if_present(:outline)
@@ -72,15 +72,14 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
     end
   end
 
-  @spec _validate_number(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
-  defp _validate_number(%Ecto.Changeset{valid?: false} = cs, _field), do: cs
+  @spec _validate_boundaries(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp _validate_boundaries(%Ecto.Changeset{valid?: false} = cs), do: cs
 
-  defp _validate_number(
+  defp _validate_boundaries(
          %Ecto.Changeset{
-           changes: %{coords: [x, y]},
+           changes: %{upper_left_corner: [x, y]},
            params: %{"__canvas_width" => canvas_width, "__canvas_height" => canvas_height}
-         } = cs,
-         :coords
+         } = cs
        ) do
     max_x = canvas_width - 1
     max_y = canvas_height - 1
@@ -90,19 +89,25 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
         cs
 
       {{:x, false}, {:y, true}} ->
-        Ecto.Changeset.add_error(cs, :coords, "out of bounds: x must be between 0 and %{max_x}",
+        Ecto.Changeset.add_error(
+          cs,
+          :upper_left_corner,
+          "out of bounds: x must be between 0 and %{max_x}",
           max_x: max_x
         )
 
       {{:x, true}, {:y, false}} ->
-        Ecto.Changeset.add_error(cs, :coords, "out of bounds: y must be between 0 and %{max_y}",
+        Ecto.Changeset.add_error(
+          cs,
+          :upper_left_corner,
+          "out of bounds: y must be between 0 and %{max_y}",
           max_y: max_y
         )
 
       {{:x, false}, {:y, false}} ->
         Ecto.Changeset.add_error(
           cs,
-          :coords,
+          :upper_left_corner,
           "out of bounds: x must be between 0 and %{max_x}, y between 0 and %{max_y}",
           max_x: max_x,
           max_y: max_y
@@ -110,9 +115,12 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
     end
   end
 
+  @spec _validate_number(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  defp _validate_number(%Ecto.Changeset{valid?: false} = cs, _field), do: cs
+
   defp _validate_number(
          %Ecto.Changeset{
-           changes: %{coords: [x, _]},
+           changes: %{upper_left_corner: [x, _]},
            params: %{"__canvas_width" => canvas_width}
          } = cs,
          :width
@@ -123,7 +131,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
 
   defp _validate_number(
          %Ecto.Changeset{
-           changes: %{coords: [_, y]},
+           changes: %{upper_left_corner: [_, y]},
            params: %{"__canvas_height" => canvas_height}
          } = cs,
          :height

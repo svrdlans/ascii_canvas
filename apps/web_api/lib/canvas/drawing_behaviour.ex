@@ -5,7 +5,7 @@ defmodule AC.WebApi.Canvas.DrawingBehaviour do
           optional(:outline) => String.t(),
           optional(:fill) => String.t(),
           id: Canvas.uuid(),
-          coords: [non_neg_integer()],
+          upper_left_corner: [non_neg_integer()],
           width: pos_integer(),
           height: pos_integer()
         }

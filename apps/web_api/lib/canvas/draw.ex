@@ -10,7 +10,7 @@ defmodule AC.WebApi.Canvas.Draw do
           optional(:outline) => String.t(),
           optional(:fill) => String.t(),
           id: Canvas.uuid(),
-          coords: [non_neg_integer()],
+          upper_left_corner: [non_neg_integer()],
           width: pos_integer(),
           height: pos_integer(),
           borders: [non_neg_integer()]
@@ -27,7 +27,7 @@ defmodule AC.WebApi.Canvas.Draw do
   end
 
   @spec add_borders(params :: Canvas.DrawingBehaviour.params()) :: fill_params()
-  def add_borders(%{coords: [x, y], width: width, height: height} = params) do
+  def add_borders(%{upper_left_corner: [x, y], width: width, height: height} = params) do
     params
     |> Map.put(:borders, [x + width - 1, y + height - 1])
   end
@@ -44,12 +44,12 @@ defmodule AC.WebApi.Canvas.Draw do
   end
 
   @spec get_coords_to_fill(params :: fill_params()) :: [[non_neg_integer()]]
-  def get_coords_to_fill(%{coords: [x, y], borders: [border_x, border_y]}),
+  def get_coords_to_fill(%{upper_left_corner: [x, y], borders: [border_x, border_y]}),
     do: for(x_val <- x..border_x, y_val <- y..border_y, do: [x_val, y_val])
 
   @spec get_fill_char(coord :: [non_neg_integer()], params :: fill_params()) :: char()
   def get_fill_char([x_val, y_val], %{
-        coords: [x, y],
+        upper_left_corner: [x, y],
         borders: [border_x, border_y],
         outline: outline,
         fill: fill

@@ -31,35 +31,47 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                valid?: false,
                errors: [
                  id: {"can't be blank", [validation: :required]},
-                 coords: {"can't be blank", [validation: :required]},
+                 upper_left_corner: {"can't be blank", [validation: :required]},
                  width: {"can't be blank", [validation: :required]},
                  height: {"can't be blank", [validation: :required]}
                ]
              } = DrawRectangle.validate(%{}, repo)
     end
 
-    test "returns validation error when coords is a list of strings", %{repo: repo} do
+    test "returns validation error when upper_left_corner is a list of strings", %{repo: repo} do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: ["a", "b"], width: 1, height: 1})
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [coords: {"is invalid", [type: {:array, :integer}, validation: :cast]}]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when coords isn't a list of 2", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [1, 2, 4], width: 1, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: ["a", "b"],
+          width: 1,
+          height: 1
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
                errors: [
-                 coords:
+                 upper_left_corner: {"is invalid", [type: {:array, :integer}, validation: :cast]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when upper_left_corner isn't a list of 2", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [1, 2, 4],
+          width: 1,
+          height: 1
+        })
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 upper_left_corner:
                    {"should have %{count} item(s)",
                     [count: 2, validation: :length, kind: :is, type: :list]}
                ]
@@ -70,11 +82,19 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [10, 4], width: 1, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [10, 4],
+          width: 1,
+          height: 1
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
-               errors: [coords: {"out of bounds: x must be between 0 and %{max_x}", [max_x: 9]}]
+               errors: [
+                 upper_left_corner:
+                   {"out of bounds: x must be between 0 and %{max_x}", [max_x: 9]}
+               ]
              } = DrawRectangle.validate(request, repo)
     end
 
@@ -82,11 +102,19 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [9, 5], width: 1, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [9, 5],
+          width: 1,
+          height: 1
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
-               errors: [coords: {"out of bounds: y must be between 0 and %{max_y}", [max_y: 4]}]
+               errors: [
+                 upper_left_corner:
+                   {"out of bounds: y must be between 0 and %{max_y}", [max_y: 4]}
+               ]
              } = DrawRectangle.validate(request, repo)
     end
 
@@ -94,12 +122,17 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [10, 5], width: 1, height: 1})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [10, 5],
+          width: 1,
+          height: 1
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
                errors: [
-                 coords:
+                 upper_left_corner:
                    {"out of bounds: x must be between 0 and %{max_x}, y between 0 and %{max_y}",
                     [max_x: 9, max_y: 4]}
                ]
@@ -110,7 +143,12 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 4], width: 3, height: 2})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [8, 4],
+          width: 3,
+          height: 2
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -126,7 +164,12 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
 
       request =
-        Fixtures.new_request(:draw_rectangle, %{id: id, coords: [8, 2], width: 2, height: 4})
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [8, 2],
+          width: 2,
+          height: 4
+        })
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -144,7 +187,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           outline: 'a'
@@ -162,7 +205,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           outline: "ab"
@@ -184,7 +227,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           outline: <<255>>
@@ -202,7 +245,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           fill: 'a'
@@ -220,7 +263,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           fill: "ab"
@@ -242,7 +285,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           fill: <<255>>
@@ -260,7 +303,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       request =
         Fixtures.new_request(:draw_rectangle, %{
           id: id,
-          coords: [3, 1],
+          upper_left_corner: [3, 1],
           width: 4,
           height: 3,
           outline: nil,
