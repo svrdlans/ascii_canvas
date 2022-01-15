@@ -181,6 +181,14 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       assert %{"id" => ["is invalid"]} = json_response(conn, 422)
     end
 
+    test "returns 422 when upper_left_corner is not a list of 2", %{conn: conn} do
+      %{"id" => id} =
+        request = Fixtures.new_request(:draw_rectangle, %{upper_left_corner: [3, 2, 5]})
+
+      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
+      assert %{"upper_left_corner" => ["should have 2 item(s)"]} = json_response(conn, 422)
+    end
+
     test "returns 422 when x coord is out of bounds", %{conn: conn} do
       {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
 
@@ -224,22 +232,75 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       assert %{"upper_left_corner" => ["out of bounds: y must be between 0 and 6"]} =
                json_response(conn, 422)
     end
+  end
 
-    test "returns 422 when upper_left_corner is not a list of 2", %{conn: conn} do
+  describe "Controller.flood_fill/2" do
+    test "returns 204 when canvas id exists and params are valid", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request = Fixtures.new_request(:flood_fill, %{id: id, start_coordinates: [3, 2], fill: "@"})
+
+      MockRepo
+      |> expect(:get, 2, fn ^id -> canvas end)
+      |> expect(:insert_or_update, fn ^id, _canvas -> :ok end)
+
+      conn = put(conn, "/canvases/#{id}/flood_fill", request)
+      assert conn.status == 204
+      assert conn.resp_body == ""
+    end
+
+    test "returns 404 when canvas id doesn't exist", %{conn: conn} do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 7})
 
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 2, 5],
-          width: 5,
-          height: 3,
-          outline: "@",
-          fill: nil
-        })
+      request = Fixtures.new_request(:flood_fill, %{id: id, start_coordinates: [3, 2], fill: "@"})
 
-      conn = put(conn, "/canvases/#{id}/draw_rectangle", request)
-      assert %{"upper_left_corner" => ["should have 2 item(s)"]} = json_response(conn, 422)
+      MockRepo
+      |> expect(:get, fn ^id -> nil end)
+
+      conn = put(conn, "/canvases/#{id}/flood_fill", request)
+      assert conn.status == 404
+      assert conn.resp_body == ""
+    end
+
+    test "returns 422 when canvas id is invalid", %{conn: conn} do
+      conn = put(conn, "/canvases/123/flood_fill")
+      assert %{"id" => ["is invalid"]} = json_response(conn, 422)
+    end
+
+    test "returns 422 when start_coordinates is not a list of 2", %{conn: conn} do
+      %{"id" => id} = request = Fixtures.new_request(:flood_fill, %{start_coordinates: [3, 2, 5]})
+
+      conn = put(conn, "/canvases/#{id}/flood_fill", request)
+      assert %{"start_coordinates" => ["should have 2 item(s)"]} = json_response(conn, 422)
+    end
+
+    test "returns 422 when x coord is out of bounds", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request =
+        Fixtures.new_request(:flood_fill, %{id: id, start_coordinates: [10, 5], fill: "X"})
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
+
+      conn = put(conn, "/canvases/#{id}/flood_fill", request)
+
+      assert %{"start_coordinates" => ["out of bounds: x must be between 0 and 9"]} =
+               json_response(conn, 422)
+    end
+
+    test "returns 422 when y coord is out of bounds", %{conn: conn} do
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
+
+      request = Fixtures.new_request(:flood_fill, %{id: id, start_coordinates: [9, 7], fill: "O"})
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
+
+      conn = put(conn, "/canvases/#{id}/flood_fill", request)
+
+      assert %{"start_coordinates" => ["out of bounds: y must be between 0 and 6"]} =
+               json_response(conn, 422)
     end
   end
 

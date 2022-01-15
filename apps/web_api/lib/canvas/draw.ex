@@ -18,12 +18,19 @@ defmodule AC.WebApi.Canvas.Draw do
 
   @impl Canvas.DrawingBehaviour
   @spec rectangle(canvas :: Canvas.t(), params :: Canvas.DrawingBehaviour.params()) :: Canvas.t()
-  def rectangle(canvas, params) do
+  def rectangle(%Canvas{} = canvas, params) do
     params = add_borders(params)
 
     params
     |> get_coords_to_fill()
     |> fill_coords(canvas, params)
+  end
+
+  @impl Canvas.DrawingBehaviour
+  @spec flood_fill(canvas :: Canvas.t(), params :: Canvas.DrawingBehaviour.fill_params()) ::
+          Canvas.t()
+  def flood_fill(%Canvas{} = canvas, _params) do
+    canvas
   end
 
   @spec add_borders(params :: Canvas.DrawingBehaviour.params()) :: fill_params()

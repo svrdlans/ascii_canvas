@@ -48,15 +48,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when upper_left_corner is a list of strings", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: ["a", "b"],
-          width: 1,
-          height: 1
-        })
+      request = Fixtures.new_request(:draw_rectangle, %{upper_left_corner: ["a", "b"]})
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -67,15 +59,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when upper_left_corner isn't a list of 2", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [1, 2, 4],
-          width: 1,
-          height: 1
-        })
+      request = Fixtures.new_request(:draw_rectangle, %{upper_left_corner: [1, 2, 4]})
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -83,6 +67,79 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                  upper_left_corner:
                    {"should have %{count} item(s)",
                     [count: 2, validation: :length, kind: :is, type: :list]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline can't be cast to string", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{outline: 'a'})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [outline: {"is invalid", [type: :string, validation: :cast]}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline has size > 1", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{outline: "ab"})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 outline:
+                   {"should be %{count} character(s)",
+                    [count: 1, validation: :length, kind: :is, type: :string]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when outline is not an ascii string", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{outline: <<255>>})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [outline: {"must be a valid ASCII character", []}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill can't be cast to string", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{fill: 'a'})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [fill: {"is invalid", [type: :string, validation: :cast]}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill has size > 1", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{fill: "ab"})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 fill:
+                   {"should be %{count} character(s)",
+                    [count: 1, validation: :length, kind: :is, type: :string]}
+               ]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when fill is not an ascii string", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{fill: <<255>>})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [fill: {"must be a valid ASCII character", []}]
+             } = DrawRectangle.validate(request, repo)
+    end
+
+    test "returns validation error when neither outline nor fill are present", %{repo: repo} do
+      request = Fixtures.new_request(:draw_rectangle, %{outline: nil, fill: nil})
+
+      assert %Ecto.Changeset{
+               valid?: false,
+               errors: [
+                 outline: {"one of either these fields must be present: [:outline, :fill]", []}
                ]
              } = DrawRectangle.validate(request, repo)
     end
@@ -201,143 +258,6 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                  height:
                    {"must be less than or equal to %{number}",
                     [validation: :number, kind: :less_than_or_equal_to, number: 3]}
-               ]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when outline can't be cast to string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          outline: 'a'
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [outline: {"is invalid", [type: :string, validation: :cast]}]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when outline has size > 1", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          outline: "ab"
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [
-                 outline:
-                   {"should be %{count} character(s)",
-                    [count: 1, validation: :length, kind: :is, type: :string]}
-               ]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when outline is not an ascii string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          outline: <<255>>
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [outline: {"must be a valid ASCII character", []}]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when fill can't be cast to string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          fill: 'a'
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [fill: {"is invalid", [type: :string, validation: :cast]}]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when fill has size > 1", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          fill: "ab"
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [
-                 fill:
-                   {"should be %{count} character(s)",
-                    [count: 1, validation: :length, kind: :is, type: :string]}
-               ]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when fill is not an ascii string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          fill: <<255>>
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [fill: {"must be a valid ASCII character", []}]
-             } = DrawRectangle.validate(request, repo)
-    end
-
-    test "returns validation error when neither outline nor fill are present", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
-
-      request =
-        Fixtures.new_request(:draw_rectangle, %{
-          id: id,
-          upper_left_corner: [3, 1],
-          width: 4,
-          height: 3,
-          outline: nil,
-          fill: nil
-        })
-
-      assert %Ecto.Changeset{
-               valid?: false,
-               errors: [
-                 outline: {"one of either these fields must be present: [:outline, :fill]", []}
                ]
              } = DrawRectangle.validate(request, repo)
     end

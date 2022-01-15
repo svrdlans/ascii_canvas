@@ -24,4 +24,16 @@ defmodule AC.WebApi.Fixtures do
       "fill" => Map.get(overrides, :fill, Faker.generate(:ascii_string, size: 1))
     }
   end
+
+  def new_request(:flood_fill, overrides) do
+    coords =
+      overrides[:start_coordinates] ||
+        [Faker.generate(:integer, min: 0, max: 50), Faker.generate(:integer, min: 0, max: 50)]
+
+    %{
+      "id" => overrides[:id] || Faker.generate(:uuid),
+      "start_coordinates" => coords,
+      "fill" => Map.get(overrides, :fill, Faker.generate(:ascii_string, size: 1))
+    }
+  end
 end

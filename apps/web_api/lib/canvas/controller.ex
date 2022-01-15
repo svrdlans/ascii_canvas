@@ -40,7 +40,13 @@ defmodule AC.WebApi.Canvas.Controller do
     |> Responder.respond_on(conn)
   end
 
-  def flood_fill(conn, _params) do
-    conn
+  def flood_fill(conn, params) do
+    params
+    |> RequestHandler.process(
+      &Requests.FloodFill.validate/2,
+      &Handlers.FloodFill.handle/2,
+      RepoAPI
+    )
+    |> Responder.respond_on(conn)
   end
 end
