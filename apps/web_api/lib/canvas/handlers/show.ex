@@ -18,7 +18,7 @@ defmodule AC.WebApi.Canvas.Handlers.Show do
 
   def handle(%Ecto.Changeset{} = cs, repo) do
     %{id: id} = Show.changes(cs)
-    %{} = canvas = Repo.get(repo, id)
-    {:ok, canvas}
+    canvas = Repo.get(repo, id)
+    {:ok, Map.put(canvas, :content, Canvas.to_string(canvas))}
   end
 end

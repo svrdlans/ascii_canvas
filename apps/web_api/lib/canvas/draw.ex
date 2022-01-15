@@ -36,9 +36,10 @@ defmodule AC.WebApi.Canvas.Draw do
           Canvas.t()
   def fill_coords([], canvas, _params), do: canvas
 
-  def fill_coords([[_, _] = pair | rest], %{content: content} = canvas, params) do
+  def fill_coords([[x, y] = pair | rest], %{content: content} = canvas, params) do
     char = get_fill_char(pair, params)
-    canvas = %{canvas | content: put_in(content, pair, char)}
+    # x and y are reversed because of the way the canvas is initialized
+    canvas = %{canvas | content: put_in(content, [y, x], char)}
     fill_coords(rest, canvas, params)
   end
 
@@ -50,10 +51,11 @@ defmodule AC.WebApi.Canvas.Draw do
   def get_fill_char([x_val, y_val], %{
         coords: [x, y],
         borders: [border_x, border_y],
-        outline: outline
+        outline: outline,
+        fill: fill
       })
       when x_val in [x, border_x] or y_val in [y, border_y],
-      do: outline
+      do: outline || fill
 
   def get_fill_char(_, %{fill: fill}), do: fill
 end
