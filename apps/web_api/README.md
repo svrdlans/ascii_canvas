@@ -1,6 +1,11 @@
-# ACWebApi
+# AC.WebApi
 
 ## Running the app
+
+There is a `run.sh` script that starts up the app and makes the api available on http://localhost:4000/
+
+There is also a `bless` alias that should be used before every commit which checks for warnings in source code,
+checks formatting, runs all tests and calculates coverage and runs dialyzer to verify all type specs.
 
 ## Listing all canvases
 
@@ -167,3 +172,16 @@ and canvas width and height, so if canvas size is 5 x 5, and `coords` are [3,3],
 maximum value of 2 each.
 
 `outline` and `fill` can only be an ASCII encoded byte and are optional, but at least one must be present.
+
+Example with `curl`:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"coords\":[3,2],\"fill\":\"X\",\"height\":3,\"outline\":\"@\",\"width\":5}" \
+  http://localhost:4000/canvases/ee4b507d-1fc0-4717-829c-f98af852201b/draw_rectangle
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Sat, 15 Jan 2022 15:29:34 GMT
+server: Cowboy
+x-request-id: Fsp7SrVydohuULoAAAAC
+```
