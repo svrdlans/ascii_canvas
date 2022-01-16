@@ -1,6 +1,5 @@
 defmodule AC.WebApi.Canvas.Handlers.Delete do
   alias AC.WebApi.Canvas.Requests.Delete
-  alias AC.WebApi.Repo
   import AC.WebApi.ErrorHelpers, only: [id_not_found?: 1]
 
   @spec handle(Ecto.Changeset.t(), module()) ::
@@ -17,6 +16,6 @@ defmodule AC.WebApi.Canvas.Handlers.Delete do
 
   def handle(%Ecto.Changeset{} = cs, repo) do
     %{id: id} = Delete.changes(cs)
-    :ok = Repo.delete(repo, id)
+    :ok = repo.delete(id)
   end
 end

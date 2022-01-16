@@ -3,7 +3,6 @@ defmodule AC.WebApi.Canvas.Requests.Delete do
   Schema for validating canvas delete request.
   """
   alias AC.WebApi.Canvas
-  alias AC.WebApi.Repo
 
   use Ecto.Schema
 
@@ -37,7 +36,7 @@ defmodule AC.WebApi.Canvas.Requests.Delete do
     do: cs
 
   defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}} = cs, repo) do
-    if Repo.exists?(repo, id) do
+    if repo.exists?(id) do
       cs
     else
       Ecto.Changeset.add_error(cs, :id, @not_found)

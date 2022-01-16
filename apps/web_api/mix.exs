@@ -56,7 +56,8 @@ defmodule AC.WebApi.MixProject do
       # test dependencies
       {:dialyxir, "~> 1.0", runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
-      {:faker, "~> 0.17", only: [:test, :dev]}
+      {:faker, "~> 0.17", only: [:test, :dev]},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 

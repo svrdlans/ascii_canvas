@@ -8,13 +8,11 @@ defmodule AC.WebApi.Repo do
   Requires `:table_name` to be passed when calling `start_link/1`.
   """
 
-  alias AC.WebApi.Canvas
-
+  @behaviour AC.WebApi.RepoAPI
   use GenServer
 
   def start_link(opts) when is_list(opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
-    GenServer.start_link(__MODULE__, opts, name: name)
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
@@ -33,31 +31,25 @@ defmodule AC.WebApi.Repo do
     end
   end
 
-  @spec insert_or_update(
-          name :: module(),
-          key :: Canvas.uuid() | any(),
-          value :: Canvas.t() | any()
-        ) ::
-          :ok | {:error, any()}
-  def insert_or_update(name, key, value),
-    do: GenServer.call(name, {:insert_or_update, key, value})
+  @impl AC.WebApi.RepoAPI
+  def insert_or_update(key, value),
+    do: GenServer.call(__MODULE__, {:insert_or_update, key, value})
 
-  @spec exists?(name :: module(), key :: Canvas.uuid() | any()) :: boolean()
-  def exists?(name, key),
-    do: GenServer.call(name, {:exists?, key})
+  @impl AC.WebApi.RepoAPI
+  def exists?(key),
+    do: GenServer.call(__MODULE__, {:exists?, key})
 
-  @spec get(name :: module(), key :: Canvas.uuid() | any()) ::
-          nil | Canvas.t() | any() | {:error, any()}
-  def get(name, key),
-    do: GenServer.call(name, {:get, key})
+  @impl AC.WebApi.RepoAPI
+  def get(key),
+    do: GenServer.call(__MODULE__, {:get, key})
 
-  @spec get_all(name :: module()) :: [Canvas.t() | any()] | {:error, any()}
-  def get_all(name),
-    do: GenServer.call(name, :get_all)
+  @impl AC.WebApi.RepoAPI
+  def get_all(),
+    do: GenServer.call(__MODULE__, :get_all)
 
-  @spec delete(name :: module(), key :: Canvas.t() | any()) :: :ok | {:error, any()}
-  def delete(name, key),
-    do: GenServer.call(name, {:delete, key})
+  @impl AC.WebApi.RepoAPI
+  def delete(key),
+    do: GenServer.call(__MODULE__, {:delete, key})
 
   @impl true
   def handle_call({:insert_or_update, key, value}, _from, %{table_name: table_name} = state) do

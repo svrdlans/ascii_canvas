@@ -1,7 +1,6 @@
 defmodule AC.WebApi.Canvas.Handlers.Show do
   alias AC.WebApi.Canvas.Requests.Show
   alias AC.WebApi.Canvas
-  alias AC.WebApi.Repo
   import AC.WebApi.ErrorHelpers, only: [id_not_found?: 1]
 
   @spec handle(Ecto.Changeset.t(), module()) ::
@@ -16,9 +15,8 @@ defmodule AC.WebApi.Canvas.Handlers.Show do
     end
   end
 
-  def handle(%Ecto.Changeset{} = cs, repo) do
-    %{id: id} = Show.changes(cs)
-    canvas = Repo.get(repo, id)
+  def handle(%Ecto.Changeset{} = cs, _repo) do
+    %{canvas: canvas} = Show.changes(cs)
     {:ok, Map.put(canvas, :content, Canvas.to_string(canvas))}
   end
 end

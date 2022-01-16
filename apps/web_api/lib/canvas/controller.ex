@@ -4,48 +4,38 @@ defmodule AC.WebApi.Canvas.Controller do
   alias AC.WebApi.Canvas.RequestHandler
   alias AC.WebApi.Canvas.Requests
   alias AC.WebApi.Canvas.Handlers
+  alias AC.WebApi.RepoAPI
   alias AC.WebApi.Responder
-  alias AC.WebApi.Helpers.AppConfig
 
   def index(conn, _params) do
-    {:ok, repo} = AppConfig.get_repo_name()
-
-    Handlers.Index.handle(repo)
+    Handlers.Index.handle(RepoAPI)
     |> Responder.respond_on(conn)
   end
 
   def show(conn, params) do
-    {:ok, repo} = AppConfig.get_repo_name()
-
     params
-    |> RequestHandler.process(&Requests.Show.validate/2, &Handlers.Show.handle/2, repo)
+    |> RequestHandler.process(&Requests.Show.validate/2, &Handlers.Show.handle/2, RepoAPI)
     |> Responder.respond_on(conn)
   end
 
   def create(conn, params) do
-    {:ok, repo} = AppConfig.get_repo_name()
-
     params
-    |> RequestHandler.process(&Requests.Create.validate/2, &Handlers.Create.handle/2, repo)
+    |> RequestHandler.process(&Requests.Create.validate/2, &Handlers.Create.handle/2, RepoAPI)
     |> Responder.respond_on(conn)
   end
 
   def delete(conn, params) do
-    {:ok, repo} = AppConfig.get_repo_name()
-
     params
-    |> RequestHandler.process(&Requests.Delete.validate/2, &Handlers.Delete.handle/2, repo)
+    |> RequestHandler.process(&Requests.Delete.validate/2, &Handlers.Delete.handle/2, RepoAPI)
     |> Responder.respond_on(conn)
   end
 
   def draw_rectangle(conn, params) do
-    {:ok, repo} = AppConfig.get_repo_name()
-
     params
     |> RequestHandler.process(
       &Requests.DrawRectangle.validate/2,
       &Handlers.DrawRectangle.handle/2,
-      repo
+      RepoAPI
     )
     |> Responder.respond_on(conn)
   end

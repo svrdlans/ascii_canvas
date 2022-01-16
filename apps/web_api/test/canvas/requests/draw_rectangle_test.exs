@@ -4,12 +4,18 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
   alias AC.WebApi.Canvas.Requests.DrawRectangle
   alias AC.WebApi.Canvas
   alias AC.WebApi.Fixtures
-  alias AC.WebApi.Repo
   alias AC.WebApi.Test.Faker
+  alias AC.WebApi.MockRepo
+
+  import Mox
+
+  setup do
+    verify_on_exit!()
+
+    [repo: Application.get_env(:ac_web_api, :repo_api)]
+  end
 
   describe "DrawRectangle.validate/2" do
-    setup :with_repo
-
     test "returns validation error for invalid id", %{repo: repo} do
       request = Fixtures.new_request(:draw_rectangle, %{id: 234})
 
@@ -20,7 +26,10 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns id not_found when id doesn't exist", %{repo: repo} do
-      request = Fixtures.new_request(:draw_rectangle)
+      %{"id" => id} = request = Fixtures.new_request(:draw_rectangle)
+
+      MockRepo
+      |> expect(:get, fn ^id -> nil end)
 
       assert %Ecto.Changeset{valid?: false, errors: [id: {"not found", []}]} =
                DrawRectangle.validate(request, repo)
@@ -39,7 +48,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when upper_left_corner is a list of strings", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -58,7 +67,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when upper_left_corner isn't a list of 2", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -79,7 +88,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when x coord out of bounds", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -88,6 +97,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
           width: 1,
           height: 1
         })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -99,7 +111,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when y coord out of bounds", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -108,6 +120,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
           width: 1,
           height: 1
         })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -119,7 +134,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when [x, y] is out of bounds", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -128,6 +143,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
           width: 1,
           height: 1
         })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -140,7 +158,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when width is out of bounds", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -149,6 +167,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
           width: 3,
           height: 2
         })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -161,7 +182,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when height is out of bounds", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -170,6 +191,9 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
           width: 2,
           height: 4
         })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
 
       assert %Ecto.Changeset{
                valid?: false,
@@ -182,7 +206,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when outline can't be cast to string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -200,7 +224,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when outline has size > 1", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -222,7 +246,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when outline is not an ascii string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -240,7 +264,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when fill can't be cast to string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -258,7 +282,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when fill has size > 1", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -280,7 +304,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when fill is not an ascii string", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -298,7 +322,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
 
     test "returns validation error when neither outline nor fill are present", %{repo: repo} do
-      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, repo, %{width: 10, height: 5})
+      {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1, %{width: 10, height: 5})
 
       request =
         Fixtures.new_request(:draw_rectangle, %{
@@ -319,28 +343,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
     end
   end
 
-  def with_repo(_c) do
-    table_name = :draw_tests
-    name = DrawTest
-
-    {:ok, _pid} =
-      start_supervised({Repo, table_name: table_name, name: name}, restart: :temporary)
-
-    on_exit(fn ->
-      table_name
-      |> Atom.to_string()
-      |> File.exists?()
-      |> if do
-        :ok = File.rm(to_string(table_name))
-      end
-
-      :ok
-    end)
-
-    [table_name: table_name, repo: name]
-  end
-
-  defp _setup_canvases(count, repo, overrides) do
+  defp _setup_canvases(count, overrides) do
     canvases =
       for _ <- 1..count do
         Faker.generate(:uuid)
@@ -348,7 +351,6 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
       |> Enum.reduce([], fn id, acc ->
         %{"width" => width, "height" => height} = Fixtures.new_request(:create_canvas, overrides)
         canvas = Canvas.create(width, height, fn -> id end)
-        Repo.insert_or_update(repo, id, canvas)
         [canvas | acc]
       end)
       |> Enum.reverse()

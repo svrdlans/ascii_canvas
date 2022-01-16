@@ -4,7 +4,6 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
   """
 
   alias AC.WebApi.Canvas
-  alias AC.WebApi.Repo
 
   use Ecto.Schema
 
@@ -37,14 +36,14 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
     %__MODULE__{}
     |> Ecto.Changeset.cast(params, required_fields ++ optional_fields)
     |> Ecto.Changeset.validate_required(required_fields)
-    |> _validate_id_exists(repo)
     |> Ecto.Changeset.validate_length(:upper_left_corner, is: 2)
-    |> _validate_boundaries()
-    |> _validate_number(:width)
-    |> _validate_number(:height)
     |> _validate_if_present(:outline)
     |> _validate_if_present(:fill)
     |> _validate_one_exists(~w(outline fill)a)
+    |> _validate_id_exists(repo)
+    |> _validate_boundaries()
+    |> _validate_number(:width)
+    |> _validate_number(:height)
   end
 
   @spec changes(Ecto.Changeset.t()) :: t()
@@ -58,7 +57,7 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangle do
     do: cs
 
   defp _validate_id_exists(%Ecto.Changeset{changes: %{id: id}, params: params} = cs, repo) do
-    case Repo.get(repo, id) do
+    case repo.get(id) do
       nil ->
         Ecto.Changeset.add_error(cs, :id, @not_found)
 
