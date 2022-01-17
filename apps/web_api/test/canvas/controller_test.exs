@@ -50,6 +50,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.show/2" do
+    setup do
+      MockRepo
+      |> allow(self(), AC.WebApi.Canvas.RequestHandler)
+
+      :ok
+    end
+
     test "returns 200 when canvas id exists", %{conn: conn} do
       {:ok, %{canvases: [%{id: id, width: width, height: height} = canvas]}} = _setup_canvases(1)
 
@@ -75,9 +82,26 @@ defmodule AC.WebApi.Canvas.ControllerTest do
       conn = get(conn, "/canvases/123")
       assert %{"id" => ["is invalid"]} = json_response(conn, 422)
     end
+
+    test "returns 503 when processing raises an exception", %{conn: conn} do
+      uuid = Faker.generate(:uuid)
+
+      MockRepo
+      |> expect(:get, fn ^uuid -> raise ArgumentError end)
+
+      conn = get(conn, "/canvases/#{uuid}")
+      assert %{"error" => "Internal error"} = json_response(conn, 503)
+    end
   end
 
   describe "Controller.create/2" do
+    setup do
+      MockRepo
+      |> allow(self(), AC.WebApi.Canvas.RequestHandler)
+
+      :ok
+    end
+
     test "returns 201 with canvas id for valid params", %{conn: conn} do
       request = Fixtures.new_request(:create_canvas)
 
@@ -103,6 +127,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.delete/2" do
+    setup do
+      MockRepo
+      |> allow(self(), AC.WebApi.Canvas.RequestHandler)
+
+      :ok
+    end
+
     test "returns 204 when canvas id exists", %{conn: conn} do
       {:ok, %{canvases: [%{id: id}]}} = _setup_canvases(1)
 
@@ -133,6 +164,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.draw_rectangle/2" do
+    setup do
+      MockRepo
+      |> allow(self(), AC.WebApi.Canvas.RequestHandler)
+
+      :ok
+    end
+
     test "returns 204 when canvas id exists and params are valid", %{conn: conn} do
       {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
 
@@ -235,6 +273,13 @@ defmodule AC.WebApi.Canvas.ControllerTest do
   end
 
   describe "Controller.flood_fill/2" do
+    setup do
+      MockRepo
+      |> allow(self(), AC.WebApi.Canvas.RequestHandler)
+
+      :ok
+    end
+
     test "returns 204 when canvas id exists and params are valid", %{conn: conn} do
       {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 7})
 

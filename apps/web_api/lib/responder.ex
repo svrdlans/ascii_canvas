@@ -33,9 +33,11 @@ defmodule AC.WebApi.Responder do
   end
 
   def respond_on({:created, canvas_id}, %Plug.Conn{} = conn) do
+    payload = %{id: canvas_id}
+
     conn
     |> put_status(201)
-    |> json(%{id: canvas_id})
+    |> json(payload)
   end
 
   def respond_on({:error, :not_found}, %Plug.Conn{} = conn) do
@@ -48,6 +50,14 @@ defmodule AC.WebApi.Responder do
 
     conn
     |> put_status(422)
+    |> json(payload)
+  end
+
+  def respond_on({:error, :internal_error}, %Plug.Conn{} = conn) do
+    payload = %{error: "Internal error"}
+
+    conn
+    |> put_status(503)
     |> json(payload)
   end
 end

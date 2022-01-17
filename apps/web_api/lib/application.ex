@@ -14,7 +14,8 @@ defmodule AC.WebApi.Application do
     :test ->
       defp _get_children() do
         [
-          AC.WebApi.Endpoint
+          AC.WebApi.Endpoint,
+          AC.WebApi.Canvas.RequestHandler
         ]
       end
 
@@ -26,6 +27,7 @@ defmodule AC.WebApi.Application do
           AC.WebApi.Telemetry,
           {Phoenix.PubSub, name: AC.WebApi.PubSub},
           {AC.WebApi.Repo, table_name: table_name},
+          AC.WebApi.Canvas.RequestHandler,
           AC.WebApi.Endpoint
         ]
       end
