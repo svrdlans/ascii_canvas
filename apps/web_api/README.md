@@ -151,12 +151,12 @@ x-request-id: Fsn06unZcng_essAAAYC
 ## Drawing a rectangle
 
 The request to draw a rectangle must be performed on a valid canvas, meaning an
-existing canvas id should be supplied in the uri.
+existing canvas id should be supplied in the path of the request.
 
 Here is an example of a valid json request:
 ```
 {
-  "coords": [3,4],
+  "upper_left_corner": [3,4],
   "width": 5,
   "height": 7,
   "outline": "X",
@@ -164,11 +164,11 @@ Here is an example of a valid json request:
 }
 ```
 
-`coords` is a list of exactly 2 integers (x,y) and represents the coordinates of the upper left corner of the rectangle
+`upper_left_corner` is a list of exactly 2 integers (x,y) and represents the coordinates of the upper left corner of the rectangle
 to be drawn. Values of x and y are zero-based and limited by and validated against canvas width and height.
 
-`width` and `height` are integers and respresent width and height of the rectangle. They are validated against `coords`
-and canvas width and height, so if canvas size is 5 x 5, and `coords` are [3,3], `width` and `height` can have a
+`width` and `height` are integers and respresent width and height of the rectangle. They are validated against `upper_left_corner`
+and canvas width and height, so if canvas size is 5 x 5, and `upper_left_corner` are [3,3], `width` and `height` can have a
 maximum value of 2 each.
 
 `outline` and `fill` can only be an ASCII encoded byte and are optional, but at least one must be present.
@@ -176,7 +176,7 @@ maximum value of 2 each.
 Example with `curl`:
 ```
 curl -X PUT -i -H "Content-Type: application/json" \
-  -d "{\"coords\":[3,2],\"fill\":\"X\",\"height\":3,\"outline\":\"@\",\"width\":5}" \
+  -d "{\"upper_left_corner\":[3,2],\"fill\":\"X\",\"height\":3,\"outline\":\"@\",\"width\":5}" \
   http://localhost:4000/canvases/ee4b507d-1fc0-4717-829c-f98af852201b/draw_rectangle
 
 HTTP/1.1 204 No Content
@@ -185,3 +185,134 @@ date: Sat, 15 Jan 2022 15:29:34 GMT
 server: Cowboy
 x-request-id: Fsp7SrVydohuULoAAAAC
 ```
+
+## Flood filling a rectangle
+
+To flood fill a canvas with a fill character you need to supply the `start_coordinates` which must not be inside a rectangle,
+and a `fill` character which must be a valid ASCII encoded byte.
+Existing canvas id must be supplied in the path of the request.
+
+Example with `curl`:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"start_coordinates\":[0, 0],\"fill\":\"-\"}" \
+  http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae/flood_fill
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Mon, 17 Jan 2022 19:18:33 GMT
+server: Cowboy
+x-request-id: Fssk8q0zcrxVSOMAAATD
+```
+
+As with previous requests, if any of required parameters are invalid or not supplied, an HTTP 422 response will be returned
+with a json containing the validation errors.
+
+
+## Complete example per requirements
+
+### Test fixture 3
+
+- Rectangle at `[14, 0]` with width `7`, height `6`, outline character: none, fill: `.`
+- Rectangle at `[0, 3]` with width `8`, height `4`, outline character: `O`, fill: `none`
+- Rectangle at `[5, 5]` with width `5`, height `3`, outline character: `X`, fill: `X`
+- Flood fill at `[0, 0]` with fill character `-` (canvas presented in 21x8 size)
+
+```
+--------------.......
+--------------.......
+--------------.......
+OOOOOOOO------.......
+O      O------.......
+O    XXXXX----.......
+OOOOOXXXXX-----------
+     XXXXX-----------
+```
+
+### How to reproduce
+
+Create canvas 21x8
+```
+curl -X POST -i -H "Content-Type: application/json" -d "{\"width\": 21, \"height\": 8}" http://localhost:4000/canvases
+
+HTTP/1.1 201 Created
+cache-control: max-age=0, private, must-revalidate
+content-length: 45
+content-type: application/json; charset=utf-8
+date: Mon, 17 Jan 2022 19:12:39 GMT
+server: Cowboy
+x-request-id: FsskoFV_DbgpobAAAAQD
+
+{"id":"ec31652b-afd1-45ea-9883-af9fe20f1bae"}
+```
+
+Draw first rectangle:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"upper_left_corner\":[14,0],\"fill\":\".\",\"height\":6,\"outline\":null,\"width\":7}" \
+  http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae/draw_rectangle
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Mon, 17 Jan 2022 19:17:03 GMT
+server: Cowboy
+x-request-id: Fssk3cbWQQ2fDvIAAAQj
+```
+
+Draw second rectangle:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"upper_left_corner\":[0, 3],\"fill\":null,\"height\":4,\"outline\":\"O\",\"width\":8}" \
+  http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae/draw_rectangle
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Mon, 17 Jan 2022 19:17:11 GMT
+server: Cowboy
+x-request-id: Fssk34drTpcCGywAAARD
+```
+
+Draw third rectangle:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"upper_left_corner\":[5, 5],\"fill\":\"X\",\"height\":3,\"outline\":\"X\",\"width\":5}" \
+  http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae/draw_rectangle
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Mon, 17 Jan 2022 19:17:18 GMT
+server: Cowboy
+x-request-id: Fssk4UtXkblXXg0AAARj
+```
+
+Flood fill starting from [0, 0]:
+```
+curl -X PUT -i -H "Content-Type: application/json" \
+  -d "{\"start_coordinates\":[0, 0],\"fill\":\"-\"}" \
+  http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae/flood_fill
+
+HTTP/1.1 204 No Content
+cache-control: max-age=0, private, must-revalidate
+date: Mon, 17 Jan 2022 19:18:33 GMT
+server: Cowboy
+x-request-id: Fssk8q0zcrxVSOMAAATD
+```
+
+Get the content of the canvas:
+```
+curl -X GET -i http://localhost:4000/canvases/ec31652b-afd1-45ea-9883-af9fe20f1bae
+
+HTTP/1.1 200 OK
+cache-control: max-age=0, private, must-revalidate
+content-length: 262
+content-type: application/json; charset=utf-8
+date: Mon, 17 Jan 2022 19:30:11 GMT
+server: Cowboy
+x-request-id: FssllTKjDpbQsxgAAAUD
+
+{"content":"--------------.......\n--------------.......\n--------------.......\nOOOOOOOO------.......\nO      O------.......\nO    XXXXX----.......\nOOOOOXXXXX-----------\n     XXXXX-----------","height":8,"id":"ec31652b-afd1-45ea-9883-af9fe20f1bae","width":21}
+```
+
+Then you can copy the string from "content", save it to a file (without initial and trailing quotes) and in the terminal (macOS) run `echo -e "$(cat <file_name>)"`,
+or you could just paste the content directly into an `echo` command:
+`echo -e "--------------.......\n--------------.......\n--------------.......\nOOOOOOOO------.......\nO      O------.......\nO    XXXXX----.......\nOOOOOXXXXX-----------\n     XXXXX-----------"`

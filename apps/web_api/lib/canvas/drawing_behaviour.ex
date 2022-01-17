@@ -3,7 +3,7 @@ defmodule AC.WebApi.Canvas.DrawingBehaviour do
 
   @type ascii_char() :: <<_::8>>
 
-  @type params() :: %{
+  @type rectangle_params() :: %{
           optional(:outline) => String.t(),
           optional(:fill) => String.t(),
           id: Canvas.uuid(),
@@ -12,13 +12,13 @@ defmodule AC.WebApi.Canvas.DrawingBehaviour do
           height: pos_integer()
         }
 
-  @type fill_params() :: %{
+  @type flood_params() :: %{
           id: Canvas.uuid(),
           start_coordinates: [non_neg_integer()],
           fill: ascii_char()
         }
 
-  @callback rectangle(canvas :: Canvas.t(), params :: params()) :: Canvas.t()
+  @callback rectangle(canvas :: Canvas.t(), params :: rectangle_params()) :: Canvas.t()
 
-  @callback flood_fill(canvas :: Canvas.t(), params :: fill_params()) :: Canvas.t()
+  @callback flood_fill(canvas :: Canvas.t(), params :: flood_params()) :: Canvas.t()
 end
