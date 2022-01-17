@@ -166,6 +166,17 @@ defmodule AC.WebApi.Canvas.Requests.FloodFillTest do
       assert %Ecto.Changeset{valid?: false, errors: [start_coordinates: {"already filled", []}]} =
                FloodFill.validate(request, repo)
     end
+
+    test "returns valid changeset for valid data", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
+
+      request = Fixtures.new_request(:flood_fill, %{id: id, start_coordinates: [4, 2]})
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
+
+      assert %Ecto.Changeset{valid?: true} = FloodFill.validate(request, repo)
+    end
   end
 
   defp _setup_canvases(count, overrides) do

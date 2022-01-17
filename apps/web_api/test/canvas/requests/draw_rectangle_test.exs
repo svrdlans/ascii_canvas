@@ -261,6 +261,23 @@ defmodule AC.WebApi.Canvas.Requests.DrawRectangleTest do
                ]
              } = DrawRectangle.validate(request, repo)
     end
+
+    test "returns valid changeset for valid data", %{repo: repo} do
+      {:ok, %{canvases: [%{id: id} = canvas]}} = _setup_canvases(1, %{width: 10, height: 5})
+
+      request =
+        Fixtures.new_request(:draw_rectangle, %{
+          id: id,
+          upper_left_corner: [8, 2],
+          width: 2,
+          height: 3
+        })
+
+      MockRepo
+      |> expect(:get, fn ^id -> canvas end)
+
+      assert %Ecto.Changeset{valid?: true} = DrawRectangle.validate(request, repo)
+    end
   end
 
   defp _setup_canvases(count, overrides) do

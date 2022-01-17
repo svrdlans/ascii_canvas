@@ -14,8 +14,9 @@ defmodule AC.WebApi.Test.Faker do
 
     for _ <- 1..size,
         do:
-          0
-          |> Faker.random_between(127)
+          0..127
+          # non printable characters and blank
+          |> Faker.Util.pick([9, 10, 11, 12, 13, 32])
           |> :binary.encode_unsigned(),
         into: ""
   end
