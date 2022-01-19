@@ -20,7 +20,6 @@ defmodule AC.WebApi.Canvas.Draw do
 
   @type direction() :: :up | :right | :down | :left
 
-  @blank " "
   @directions ~w(up right down left)a
 
   @impl Canvas.DrawingBehaviour
@@ -73,7 +72,7 @@ defmodule AC.WebApi.Canvas.Draw do
        when x_val in [x, border_x] or y_val in [y, border_y],
        do: outline || fill
 
-  defp _get_fill_char(_, %{fill: fill}), do: fill || @blank
+  defp _get_fill_char(_, %{fill: fill}), do: fill
 
   @spec _traverse_directions(
           canvas :: Canvas.t(),

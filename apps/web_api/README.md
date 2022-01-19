@@ -188,8 +188,9 @@ x-request-id: Fsp7SrVydohuULoAAAAC
 
 ## Flood filling a rectangle
 
-To flood fill a canvas with a fill character you need to supply the `start_coordinates` which must not be inside a rectangle,
-and a `fill` character which must be a valid ASCII encoded byte.
+To flood fill a canvas with a fill character you need to supply the `start_coordinates` which must be an
+empty point (either outside a rectangle or inside an outline-only rectangle), and a `fill` character
+which must be a valid ASCII encoded byte.
 Existing canvas id must be supplied in the path of the request.
 
 Example with `curl`:
