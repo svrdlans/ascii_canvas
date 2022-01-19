@@ -6,16 +6,14 @@ defmodule AC.WebApi.Canvas.Draw do
   alias AC.WebApi.Canvas
   @behaviour Canvas.DrawingBehaviour
 
-  @type fill_char() :: <<_::8>>
-
   @type fill_params() :: %{
-          :outline => nil | fill_char(),
-          :fill => nil | fill_char(),
           id: Canvas.uuid(),
           upper_left_corner: [non_neg_integer()],
           width: pos_integer(),
           height: pos_integer(),
-          borders: [non_neg_integer()]
+          borders: [non_neg_integer()],
+          outline: nil | Canvas.DrawingBehaviour.ascii_char(),
+          fill: nil | Canvas.DrawingBehaviour.ascii_char()
         }
 
   @directions [up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0]]
@@ -60,7 +58,8 @@ defmodule AC.WebApi.Canvas.Draw do
   defp _get_coords_to_fill(%{upper_left_corner: [x, y], borders: [border_x, border_y]}),
     do: for(x_val <- x..border_x, y_val <- y..border_y, do: [x_val, y_val])
 
-  @spec _get_fill_char(coord :: [non_neg_integer()], params :: fill_params()) :: fill_char()
+  @spec _get_fill_char(coord :: [non_neg_integer()], params :: fill_params()) ::
+          Canvas.DrawingBehaviour.ascii_char()
   defp _get_fill_char([x_val, y_val], %{
          upper_left_corner: [x, y],
          borders: [border_x, border_y],
@@ -75,7 +74,7 @@ defmodule AC.WebApi.Canvas.Draw do
   @spec _traverse_directions(
           canvas :: Canvas.t(),
           point :: [non_neg_integer()],
-          fill :: fill_char()
+          fill :: Canvas.DrawingBehaviour.ascii_char()
         ) :: Canvas.t()
   defp _traverse_directions(
          %Canvas{content: content} = canvas,
