@@ -18,9 +18,7 @@ defmodule AC.WebApi.Canvas.Draw do
           borders: [non_neg_integer()]
         }
 
-  @type direction() :: :up | :right | :down | :left
-
-  @directions ~w(up right down left)a
+  @directions [up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0]]
 
   @impl Canvas.DrawingBehaviour
   @spec rectangle(canvas :: Canvas.t(), params :: Canvas.DrawingBehaviour.rectangle_params()) ::
@@ -87,8 +85,8 @@ defmodule AC.WebApi.Canvas.Draw do
     canvas = %{canvas | content: put_in(content, [y, x], fill)}
 
     @directions
-    |> Enum.reduce(canvas, fn direction, traversed ->
-      next_point = point |> _get_next_point(direction)
+    |> Enum.reduce(canvas, fn {_direction, point_modifier}, traversed ->
+      next_point = point |> _get_next_point(point_modifier)
 
       next_point
       |> _is_valid_point?(traversed)
@@ -107,15 +105,7 @@ defmodule AC.WebApi.Canvas.Draw do
 
   defp _is_valid_point?(_, _), do: false
 
-  @spec _get_next_point([non_neg_integer()], direction()) :: [non_neg_integer()]
-  defp _get_next_point([x, y], direction) when direction in ~w(up right down left)a do
-    [mod_x, mod_y] = _get_point_modifiers(direction)
-    [x + mod_x, y + mod_y]
-  end
-
-  @spec _get_point_modifiers(direction()) :: [integer()]
-  defp _get_point_modifiers(:up), do: [0, -1]
-  defp _get_point_modifiers(:right), do: [1, 0]
-  defp _get_point_modifiers(:down), do: [0, 1]
-  defp _get_point_modifiers(:left), do: [-1, 0]
+  @spec _get_next_point([non_neg_integer()], [non_neg_integer()]) :: [non_neg_integer()]
+  defp _get_next_point([x, y], [mod_x, mod_y]),
+    do: [x + mod_x, y + mod_y]
 end
